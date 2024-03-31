@@ -1,4 +1,4 @@
-// gcc -o myapp myapp.c -lportaudio
+// gcc -o audio audio.c -lportaudio
 
 #include <stdio.h>
 #include <stdlib.h>
