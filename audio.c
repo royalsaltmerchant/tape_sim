@@ -20,7 +20,7 @@ typedef struct
 typedef struct
 {
   WavFile *tracks;
-  int trackCount;
+  size_t trackCount;
 } MultiTrackRecorder;
 
 // END SETUP
@@ -32,7 +32,7 @@ void handleSignal(int signal)
   terminateFlag = 1;
 }
 
-void getAudioDeviceInfo()
+void checkDeviceCountAndGetAudioDeviceInfo()
 {
   int numDevices = Pa_GetDeviceCount();
   if (numDevices < 0)
@@ -40,10 +40,10 @@ void getAudioDeviceInfo()
     printf("PortAudio error: %s\n", Pa_GetErrorText((PaError)numDevices));
     exit(1);
   }
-  for (int i = 0; i < numDevices; i++)
+  for (size_t i = 0; i < numDevices; i++)
   {
     const PaDeviceInfo *deviceInfo = Pa_GetDeviceInfo(i);
-    printf("Device %d: %s\n", i, deviceInfo->name);
+    // printf("Device %d: %s\n", i, deviceInfo->name);
   }
 }
 
@@ -120,7 +120,7 @@ void writeWavData(WavFile *wav, const void *data, size_t dataSize)
 
 void closeWavFiles(MultiTrackRecorder *recorder)
 {
-  for (int i = 0; i < recorder->trackCount; i++)
+  for (size_t i = 0; i < recorder->trackCount; i++)
   {
 
     // Update RIFF chunk size at position 4
@@ -223,8 +223,8 @@ int main(void)
     return 1;
   }
 
-  // get device info
-  // getAudioDeviceInfo();
+  // get device info and check device count to ensure it is not negative
+  checkDeviceCountAndGetAudioDeviceInfo();
 
   // setup recorder multi tracks
   // max track count for default input device
@@ -244,14 +244,14 @@ int main(void)
   short inputChannels = 1;
   short outputChannels = 0;
   // init wav files
-  for (int i = 0; i < recorder.trackCount; i++)
+  for (size_t i = 0; i < recorder.trackCount; i++)
   {
     char filename[256];
-    snprintf(filename, sizeof(filename), "track%d.wav", i + 1);
+    snprintf(filename, sizeof(filename), "track%zu.wav", i + 1);
     WavFile *wav = openWavFile(filename, sampleRate, bitsPerSample, inputChannels);
     if (wav == NULL)
     {
-      printf("Failed to open WAV file for track %d\n", i + 1);
+      printf("Failed to open WAV file for track %zu\n", i + 1);
       // Cleanup previously allocated resources
       return 1;
     }
