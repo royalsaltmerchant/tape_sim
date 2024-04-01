@@ -13,6 +13,8 @@
 
 // SETUP
 unsigned long startTimeInSeconds = 0;
+int sampleRate = 48000;
+int bitDepth = 24;
 
 typedef struct
 {
@@ -94,7 +96,7 @@ int getCharNonBlocking()
 
 // END UTILIT FUNCTIONS
 
-WavFile *openWavFile(const char *filename, int sampleRate, int bitsPerSample, int channels)
+WavFile *openWavFile(const char *filename)
 {
   // allocate the memory
   WavFile *wav = (WavFile *)malloc(sizeof(WavFile));
@@ -105,6 +107,11 @@ WavFile *openWavFile(const char *filename, int sampleRate, int bitsPerSample, in
   bool fileExists = access(filename, F_OK) != -1;
 
   size_t headerSize = 44;
+  int subchunk1Size = 16; // For PCM
+  short audioFormat = 1;  // PCM = 1 means no compression
+  short numChannels = 1;
+  int byteRate = sampleRate * numChannels * (bitDepth / 8);
+  short blockAlign = numChannels * (bitDepth / 8);
 
   // Open or create the file
   wav->file = fopen(filename, fileExists ? "r+b" : "wb");
@@ -121,20 +128,13 @@ WavFile *openWavFile(const char *filename, int sampleRate, int bitsPerSample, in
     fwrite("RIFF", 1, 4, wav->file);     // "RIFF"
     fwrite("----", 1, 4, wav->file);     // Placeholder for RIFF chunk size
     fwrite("WAVEfmt ", 1, 8, wav->file); // "WAVEfmt "
-
-    int subchunk1Size = 16; // For PCM
-    short audioFormat = 1;  // PCM = 1 means no compression
-    short numChannels = channels;
-    int byteRate = sampleRate * numChannels * (bitsPerSample / 8);
-    short blockAlign = numChannels * (bitsPerSample / 8);
-
     fwrite(&subchunk1Size, sizeof(int), 1, wav->file);
     fwrite(&audioFormat, sizeof(short), 1, wav->file);
     fwrite(&numChannels, sizeof(short), 1, wav->file);
     fwrite(&sampleRate, sizeof(int), 1, wav->file);
     fwrite(&byteRate, sizeof(int), 1, wav->file);
     fwrite(&blockAlign, sizeof(short), 1, wav->file);
-    fwrite(&bitsPerSample, sizeof(short), 1, wav->file);
+    fwrite(&bitDepth, sizeof(short), 1, wav->file);
 
     // Write "data" subchunk header with a placeholder for the data size
     fwrite("data", 1, 4, wav->file);
@@ -148,7 +148,7 @@ WavFile *openWavFile(const char *filename, int sampleRate, int bitsPerSample, in
     size_t currentFileSize = ftell(wav->file);
     wav->dataSize = currentFileSize - headerSize; // Retain original length
     // Prepare for overwriting by seeking to the intended start position
-    size_t overwriteStartPos = headerSize + (sampleRate * startTimeInSeconds * (bitsPerSample / 8) * channels);
+    size_t overwriteStartPos = headerSize + (sampleRate * startTimeInSeconds * (bitDepth / 8) * numChannels);
     fseek(wav->file, overwriteStartPos, SEEK_SET);
 
     return wav;
@@ -157,15 +157,11 @@ WavFile *openWavFile(const char *filename, int sampleRate, int bitsPerSample, in
 
 void initRecordingTracks(MultiTrackRecorder *recorder)
 {
-  int sampleRate = 48000;
-  int bitsPerSample = 24;
-  short inputChannels = 1;
-
   for (size_t i = 0; i < recorder->trackCount; i++)
   {
     char filename[256];
     snprintf(filename, sizeof(filename), "track%zu.wav", i + 1);
-    WavFile *wav = openWavFile(filename, sampleRate, bitsPerSample, inputChannels);
+    WavFile *wav = openWavFile(filename);
     recorder->tracks[i] = *wav;
   }
 }
@@ -315,9 +311,7 @@ int main(void)
   recorder.trackCount = inputChannelCount;                                    // we want to make as many tracks as there are input channels on the default input device
   recorder.tracks = (WavFile *)malloc(sizeof(WavFile) * recorder.trackCount); // make room for as many wav files as needed tracks
 
-  int sampleRate = 48000;
   int frames = 256;
-  short inputChannels = 1;
   // Stream parameters
   PaStreamParameters inputParameters,
       outputParameters;
