@@ -47,8 +47,6 @@ void checkDeviceCountAndGetAudioDeviceInfo()
   }
 }
 
-#include <stdbool.h>
-
 // Checks if at least `interval` milliseconds have passed since last true return
 bool canPrintAgain(int interval)
 {
@@ -214,6 +212,8 @@ int main(void)
   PaError err;
   PaStream *stream;
   MultiTrackRecorder recorder;
+  // init signal
+  signal(SIGINT, handleSignal);
 
   // init PA
   err = Pa_Initialize();
@@ -237,11 +237,8 @@ int main(void)
     return 1;
   }
   printf("max input channels: %d\n", inputChannelCount);
-  recorder.trackCount = inputChannelCount;
-  recorder.tracks = (WavFile *)malloc(sizeof(WavFile) * recorder.trackCount);
-
-  // init signal
-  signal(SIGINT, handleSignal);
+  recorder.trackCount = inputChannelCount; // we want to make as many tracks as there are input channels on the default input device
+  recorder.tracks = (WavFile *)malloc(sizeof(WavFile) * recorder.trackCount); // make room for as many wav files as needed tracks
 
   // values
   int sampleRate = 48000;
@@ -249,7 +246,7 @@ int main(void)
   int frames = 256;
   short inputChannels = 1;
   short outputChannels = 0;
-  // init wav files
+  // init all wav track files with header data
   for (size_t i = 0; i < recorder.trackCount; i++)
   {
     char filename[256];
@@ -264,18 +261,14 @@ int main(void)
     recorder.tracks[i] = *wav;
   }
 
-  // stream and parameters
-  PaStreamParameters inputParameters;
+  // Stream parameters
+  PaStreamParameters inputParameters, outputParameters;
   inputParameters.channelCount = recorder.trackCount;
   inputParameters.device = Pa_GetDefaultInputDevice();                                                 // or another specific device
   inputParameters.sampleFormat = paInt24 | paNonInterleaved;                                           // Correct way to combine flags
   inputParameters.suggestedLatency = Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency; // lowest latency
   inputParameters.hostApiSpecificStreamInfo = NULL;                                                    // Typically NULL
-
-  // OutputParameters setup is similar if needed, otherwise set to NULL in Pa_OpenStream
-  PaStreamParameters outputParameters;
-  // Setup outputParameters similarly if you need output
-
+  // start PA audio stream
   err = Pa_OpenStream(
       &stream,
       &inputParameters,
@@ -306,18 +299,18 @@ int main(void)
     Pa_Sleep(1000);
   }
 
-  // Clean up and terminate PortAudio
-  if (stream)
-  {
-    Pa_StopStream(stream);
-    Pa_CloseStream(stream);
-  }
-
+  // Clean up on stop stream
+  Pa_StopStream(stream);
+  Pa_CloseStream(stream);
   // clean up wav files and track  memory
   closeWavFiles(&recorder); // updates the WAV headers.
+  // maybe we need to re-init the tracks pointer here if we want to stop the recording but not quit the application
   free(recorder.tracks);
   recorder.tracks = NULL;
 
+
+
+  // close out PA
   err = Pa_Terminate();
   if (err != paNoError)
   {
