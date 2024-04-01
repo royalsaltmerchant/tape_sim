@@ -161,7 +161,8 @@ WavFile *openWavFile(const char *filename, int sampleRate, int bitsPerSample, in
     // File exists, prepare to append
     // Move to the end of the file to skip existing header
     fseek(wav->file, 0, SEEK_END);
-    wav->dataSize = ftell(wav->file) - headerSize; // Assuming data starts at byte 44
+    size_t currentFileSize = ftell(wav->file);
+    wav->dataSize = currentFileSize - headerSize; // Retain original length
     return wav;
   }
 }
