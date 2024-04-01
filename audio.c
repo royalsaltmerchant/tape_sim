@@ -230,6 +230,12 @@ int main(void)
   // max track count for default input device
   const PaDeviceInfo *deviceInfo = Pa_GetDeviceInfo(Pa_GetDefaultInputDevice());
   int inputChannelCount = deviceInfo->maxInputChannels;
+  // handle input count error
+  if (inputChannelCount <= 0 || inputChannelCount > 64)
+  {
+    fprintf(stderr, "Error: Invalid number of input channels (%d). Must be between 1 and 64.\n", inputChannelCount);
+    return 1;
+  }
   printf("max input channels: %d\n", inputChannelCount);
   recorder.trackCount = inputChannelCount;
   recorder.tracks = (WavFile *)malloc(sizeof(WavFile) * recorder.trackCount);
