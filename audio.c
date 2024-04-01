@@ -2,15 +2,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/select.h>
+#include <unistd.h>
+#include <termios.h>
 #include <string.h>
 #include <time.h>
 #include <math.h>
 #include <stdbool.h>
-#include <signal.h>
 #include <portaudio.h>
 
 // SETUP
-volatile sig_atomic_t terminateFlag = 0;
 typedef struct
 {
   FILE *file;
@@ -26,12 +27,6 @@ typedef struct
 // END SETUP
 
 // UTILITY FUNCTIONS
-
-void handleSignal(int signal)
-{
-  terminateFlag = 1;
-}
-
 void checkDeviceCountAndGetAudioDeviceInfo()
 {
   int numDevices = Pa_GetDeviceCount();
@@ -62,6 +57,39 @@ bool canPrintAgain(int interval)
   return false;
 }
 
+// Function to check if a key was pressed
+bool keyPressed()
+{
+  struct timeval tv = {0L, 0L};
+  fd_set fds;
+  FD_ZERO(&fds);
+  FD_SET(0, &fds); // STDIN_FILENO is 0
+  return select(1, &fds, NULL, NULL, &tv) > 0;
+}
+
+// Function to get the pressed key without waiting for Enter key
+int getCharNonBlocking()
+{
+  struct termios oldt, newt;
+  int ch;
+  tcgetattr(STDIN_FILENO, &oldt); // Get current terminal attributes
+  newt = oldt;
+  newt.c_lflag &= ~(ICANON | ECHO);        // Disable buffering and echo
+  tcsetattr(STDIN_FILENO, TCSANOW, &newt); // Apply new settings
+
+  if (keyPressed())
+  { // Check if a key was pressed
+    ch = getchar();
+  }
+  else
+  {
+    ch = -1; // No key was pressed
+  }
+
+  tcsetattr(STDIN_FILENO, TCSANOW, &oldt); // Restore terminal attributes
+  return ch;
+}
+
 // END UTILIT FUNCTIONS
 
 WavFile *openWavFile(const char *filename, int sampleRate, int bitsPerSample, int channels)
@@ -71,14 +99,27 @@ WavFile *openWavFile(const char *filename, int sampleRate, int bitsPerSample, in
   if (!wav)
     return NULL;
 
-  // open
-  wav->file = fopen(filename, "wb");
+  // Check if the file already exists
+  bool fileExists = access(filename, F_OK) != -1;
+
+  // Open or create the file
+  wav->file = fopen(filename, fileExists ? "r+b" : "wb");
   if (!wav->file)
   {
     free(wav);
     return NULL;
   }
 
+  if (fileExists)
+  {
+    // File exists, prepare to append
+    // Move to the end of the file to skip existing header
+    fseek(wav->file, 0, SEEK_END);
+    wav->dataSize = ftell(wav->file) - 44; // Assuming data starts at byte 44
+    return wav;
+  }
+
+  // else create new
   // init size
   wav->dataSize = 0;
   // Write RIFF header with placeholders for sizes
@@ -105,6 +146,21 @@ WavFile *openWavFile(const char *filename, int sampleRate, int bitsPerSample, in
   fwrite("----", 1, 4, wav->file); // Placeholder for data chunk size
 
   return wav;
+}
+
+void initRecordingTracks(MultiTrackRecorder *recorder)
+{
+  int sampleRate = 48000;
+  int bitsPerSample = 24;
+  short inputChannels = 1;
+
+  for (size_t i = 0; i < recorder->trackCount; i++)
+  {
+    char filename[256];
+    snprintf(filename, sizeof(filename), "track%zu.wav", i + 1);
+    WavFile *wav = openWavFile(filename, sampleRate, bitsPerSample, inputChannels);
+    recorder->tracks[i] = *wav;
+  }
 }
 
 void writeWavData(WavFile *wav, const void *data, size_t dataSize)
@@ -212,8 +268,7 @@ int main(void)
   PaError err;
   PaStream *stream;
   MultiTrackRecorder recorder;
-  // init signal
-  signal(SIGINT, handleSignal);
+  bool isRecording = false;
 
   // init PA
   err = Pa_Initialize();
@@ -237,42 +292,26 @@ int main(void)
     return 1;
   }
   printf("max input channels: %d\n", inputChannelCount);
-  recorder.trackCount = inputChannelCount; // we want to make as many tracks as there are input channels on the default input device
+  recorder.trackCount = inputChannelCount;                                    // we want to make as many tracks as there are input channels on the default input device
   recorder.tracks = (WavFile *)malloc(sizeof(WavFile) * recorder.trackCount); // make room for as many wav files as needed tracks
 
-  // values
   int sampleRate = 48000;
-  int bitsPerSample = 24;
   int frames = 256;
   short inputChannels = 1;
-  short outputChannels = 0;
-  // init all wav track files with header data
-  for (size_t i = 0; i < recorder.trackCount; i++)
-  {
-    char filename[256];
-    snprintf(filename, sizeof(filename), "track%zu.wav", i + 1);
-    WavFile *wav = openWavFile(filename, sampleRate, bitsPerSample, inputChannels);
-    if (wav == NULL)
-    {
-      printf("Failed to open WAV file for track %zu\n", i + 1);
-      // Cleanup previously allocated resources
-      return 1;
-    }
-    recorder.tracks[i] = *wav;
-  }
-
   // Stream parameters
-  PaStreamParameters inputParameters, outputParameters;
+  PaStreamParameters inputParameters,
+      outputParameters;
   inputParameters.channelCount = recorder.trackCount;
   inputParameters.device = Pa_GetDefaultInputDevice();                                                 // or another specific device
   inputParameters.sampleFormat = paInt24 | paNonInterleaved;                                           // Correct way to combine flags
   inputParameters.suggestedLatency = Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency; // lowest latency
   inputParameters.hostApiSpecificStreamInfo = NULL;                                                    // Typically NULL
+
   // start PA audio stream
   err = Pa_OpenStream(
       &stream,
       &inputParameters,
-      outputChannels > 0 ? &outputParameters : NULL, // NULL if no output is needed
+      NULL, // NULL if no output is needed
       sampleRate,
       frames,
       paClipOff, // or other relevant flags. Note: paNonInterleaved is NOT set here
@@ -284,31 +323,60 @@ int main(void)
     printf("PortAudio error: %s\n", Pa_GetErrorText(err));
     return 1;
   }
-  err = Pa_StartStream(stream);
-  if (err != paNoError)
+
+  // start applicatin loop
+  printf("Press 'r' to start/stop recording. Press 'q' to quit.\n");
+  while (true)
   {
-    printf("PortAudio error: %s\n", Pa_GetErrorText(err));
-    return 1;
+    int ch = getCharNonBlocking();
+    if (ch == 'r')
+    { // Toggle recording
+      if (isRecording)
+      {
+        // Stop recording
+        Pa_StopStream(stream);
+        // clean up wav files and track  memory
+        closeWavFiles(&recorder); // updates the WAV headers.
+        isRecording = false;
+        printf("Recording stopped.\n");
+      }
+      else
+      {
+        // init or re-init all wav track files with header data
+        initRecordingTracks(&recorder);
+        // Start recording
+        // Make sure to reinitialize the stream if needed
+        err = Pa_StartStream(stream);
+        if (err != paNoError)
+        {
+          printf("PortAudio error: %s\n", Pa_GetErrorText(err));
+          return 1;
+        }
+        isRecording = true;
+        printf("Recording started.\n");
+      }
+    }
+    else if (ch == 'q')
+    { // Quit
+      if (isRecording)
+      {
+        Pa_StopStream(stream);
+        // clean up wav files and track  memory
+        closeWavFiles(&recorder); // updates the WAV headers.
+      }
+      // close the stream finally
+      Pa_CloseStream(stream);
+
+      break;
+    }
+
+    // Minimal delay to prevent tight looping
+    usleep(100000); // Sleep for 100ms
   }
 
-  printf("Recording... Press CTRL+C to stop.\n");
-
-  while (!terminateFlag)
-  {
-    // keep main thread running while background async thread runs audio recording
-    Pa_Sleep(1000);
-  }
-
-  // Clean up on stop stream
-  Pa_StopStream(stream);
-  Pa_CloseStream(stream);
-  // clean up wav files and track  memory
-  closeWavFiles(&recorder); // updates the WAV headers.
-  // maybe we need to re-init the tracks pointer here if we want to stop the recording but not quit the application
+  // free track memory
   free(recorder.tracks);
   recorder.tracks = NULL;
-
-
 
   // close out PA
   err = Pa_Terminate();
