@@ -2,6 +2,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <math.h>
+#include <stdbool.h>
 #include <signal.h>
 #include <portaudio.h>
 
@@ -41,6 +45,23 @@ void getAudioDeviceInfo()
     const PaDeviceInfo *deviceInfo = Pa_GetDeviceInfo(i);
     printf("Device %d: %s\n", i, deviceInfo->name);
   }
+}
+
+#include <stdbool.h>
+
+// Checks if at least `interval` milliseconds have passed since last true return
+bool canPrintAgain(int interval)
+{
+  static clock_t lastPrintTime = 0;
+  clock_t currentTime = clock();
+  clock_t elapsed = ((currentTime - lastPrintTime) * 1000) / CLOCKS_PER_SEC;
+
+  if (elapsed >= interval)
+  {
+    lastPrintTime = currentTime;
+    return true;
+  }
+  return false;
 }
 
 // END UTILIT FUNCTIONS
@@ -116,6 +137,32 @@ void closeWavFiles(MultiTrackRecorder *recorder)
   }
 }
 
+float calculateRMS(const unsigned char *buffer, size_t framesPerBuffer)
+{
+  float sum = 0.0;
+  for (size_t i = 0; i < framesPerBuffer; i++)
+  {
+    // Convert 3 bytes to one 24-bit int
+    int sample24bit = (buffer[3 * i] << 8) | (buffer[3 * i + 1] << 16) | (buffer[3 * i + 2] << 24);
+    sample24bit >>= 8; // Convert to signed 32-bit int
+
+    // Now convert to float
+    float sampleFloat = sample24bit / (float)INT32_MAX;
+    sum += sampleFloat * sampleFloat;
+  }
+  float rms = sqrt(sum / framesPerBuffer);
+  return rms;
+}
+
+float rmsToDb(float rms)
+{
+  // Ensure rms is positive but non-zero to avoid log10(0)
+  if (rms <= 0)
+    rms = 1e-20;
+  float dbFS = 20.0 * log10(rms);
+  return dbFS; // This will naturally yield negative values for rms < 1
+}
+
 static int recordCallback(const void *inputBuffer, void *outputBuffer,
                           unsigned long framesPerBuffer,
                           const PaStreamCallbackTimeInfo *timeInfo,
@@ -131,6 +178,17 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
 
   for (int channel = 0; channel < recorder->trackCount; ++channel)
   {
+    // calculate db levels
+    float rms = calculateRMS(buffers[channel], framesPerBuffer);
+    float dbLevel = rmsToDb(rms);
+    // Rate-limiting the print operation
+    if (canPrintAgain(1))
+    { // 10 milliseconds
+      printf("Channel %d: dB Level = %f\n", channel, dbLevel);
+    }
+
+    // RECORDING
+    // channel data and write buffer for wav
     const unsigned char *channelData = buffers[channel];
     unsigned char *writeBuffer = malloc(framesPerBuffer * 3); // Allocate buffer for the current channel
 
