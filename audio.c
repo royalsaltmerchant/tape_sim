@@ -5,7 +5,28 @@
 #include <signal.h>
 #include <portaudio.h>
 
+// SETUP
 volatile sig_atomic_t terminateFlag = 0;
+typedef struct
+{
+  FILE *file;
+  size_t dataSize;
+} WavFile;
+
+typedef struct
+{
+  WavFile *tracks;
+  int trackCount;
+} MultiTrackRecorder;
+
+// END SETUP
+
+// UTILITY FUNCTIONS
+
+void handleSignal(int signal)
+{
+  terminateFlag = 1;
+}
 
 void getAudioDeviceInfo()
 {
@@ -17,11 +38,7 @@ void getAudioDeviceInfo()
   }
 }
 
-typedef struct
-{
-  FILE *file;
-  size_t dataSize;
-} WavFile;
+// END UTILIT FUNCTIONS
 
 WavFile *openWavFile(const char *filename, int sampleRate, int bitsPerSample, int channels)
 {
@@ -75,49 +92,64 @@ void writeWavData(WavFile *wav, const void *data, size_t dataSize)
   wav->dataSize += dataSize;
 }
 
-void closeWavFile(WavFile *wav)
+void closeWavFiles(MultiTrackRecorder *recorder)
 {
-  if (!wav || !wav->file)
-    return;
+  for (int i = 0; i < recorder->trackCount; i++)
+  {
 
-  // Update RIFF chunk size at position 4
-  fseek(wav->file, 4, SEEK_SET);
-  int riffChunkSize = 4 + (8 + 16) + (8 + wav->dataSize); // "WAVE" + ("fmt " chunk and size) + ("data" header and size)
-  fwrite(&riffChunkSize, 4, 1, wav->file);
+    // Update RIFF chunk size at position 4
+    fseek(recorder->tracks[i].file, 4, SEEK_SET);
+    int riffChunkSize = 4 + (8 + 16) + (8 + recorder->tracks[i].dataSize); // "WAVE" + ("fmt " chunk and size) + ("data" header and size)
+    fwrite(&riffChunkSize, 4, 1, recorder->tracks[i].file);
 
-  // Update data chunk size at position 40
-  fseek(wav->file, 40, SEEK_SET);
-  fwrite(&wav->dataSize, 4, 1, wav->file);
+    // Update data chunk size at position 40
+    fseek(recorder->tracks[i].file, 40, SEEK_SET);
+    fwrite(&recorder->tracks[i].dataSize, 4, 1, recorder->tracks[i].file);
 
-  // Close the file
-  fclose(wav->file);
-  free(wav);
+    // Close the file
+    fclose(recorder->tracks[i].file);
+  }
 }
 
-static int recordCallback(const void *inputBuffer,
-                          void *outputBuffer,
+static int recordCallback(const void *inputBuffer, void *outputBuffer,
                           unsigned long framesPerBuffer,
                           const PaStreamCallbackTimeInfo *timeInfo,
                           PaStreamCallbackFlags statusFlags,
                           void *userData)
 {
-  WavFile *wav = (WavFile *)userData;
-  int bytesPerSample = 3; // 24 bit depth ***********************
-  writeWavData(wav, inputBuffer, framesPerBuffer * 3);
-  return paContinue;
-}
+  // Cast inputBuffer to an array of pointers to byte arrays (one per channel)
+  const unsigned char **buffers = (const unsigned char **)inputBuffer;
+  MultiTrackRecorder *recorder = (MultiTrackRecorder *)userData;
 
-void handleSignal(int signal)
-{
-  terminateFlag = 1;
+  // For each channel
+  for (int channel = 0; channel < recorder->trackCount; ++channel)
+  {
+    // Pointer to the current channel's data
+    const unsigned char *channelData = buffers[channel];
+
+    // For each frame, write the 24-bit sample (3 bytes) to the WAV file
+    for (unsigned long frame = 0; frame < framesPerBuffer; ++frame)
+    {
+      // Calculate the starting index for the current sample (3 bytes per sample)
+      int byteIndex = frame * 3;
+      // Write the sample to the WAV file corresponding to the current channel
+      writeWavData(&recorder->tracks[channel], &channelData[byteIndex], 3);
+    }
+  }
+  return paContinue;
 }
 
 int main(void)
 {
   // SETUP
   PaError err;
-  PaStream *stream = NULL;
-  WavFile *wav = NULL;
+  PaStream *stream;
+  MultiTrackRecorder recorder;
+
+  // setup recorder multi tracks
+  int trackCount = 1;
+  recorder.trackCount = trackCount;
+  recorder.tracks = (WavFile *)malloc(sizeof(WavFile) * recorder.trackCount);
 
   // init signal
   signal(SIGINT, handleSignal);
@@ -136,10 +168,43 @@ int main(void)
   int frames = 256;
   short inputChannels = 1;
   short outputChannels = 0;
-  // init wav
-  wav = openWavFile("output.wav", sampleRate, bitsPerSample, inputChannels);
-  // stream
-  err = Pa_OpenDefaultStream(&stream, inputChannels, outputChannels, paInt24, sampleRate, frames, recordCallback, wav);
+  // init wav files
+  for (int i = 0; i < recorder.trackCount; i++)
+  {
+    char filename[256];
+    snprintf(filename, sizeof(filename), "track%d.wav", i + 1);
+    WavFile *wav = openWavFile(filename, sampleRate, bitsPerSample, inputChannels);
+    if (wav == NULL)
+    {
+      printf("Failed to open WAV file for track %d\n", i + 1);
+      // Cleanup previously allocated resources
+      return 1;
+    }
+    recorder.tracks[i] = *wav;
+  }
+
+  // stream and parameters
+  PaStreamParameters inputParameters;
+  inputParameters.channelCount = recorder.trackCount;
+  inputParameters.device = Pa_GetDefaultInputDevice();                                                 // or another specific device
+  inputParameters.sampleFormat = paInt24 | paNonInterleaved;                                           // Correct way to combine flags
+  inputParameters.suggestedLatency = Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency; // lowest latency
+  inputParameters.hostApiSpecificStreamInfo = NULL;                                                    // Typically NULL
+
+  // OutputParameters setup is similar if needed, otherwise set to NULL in Pa_OpenStream
+  PaStreamParameters outputParameters;
+  // Setup outputParameters similarly if you need output
+
+  err = Pa_OpenStream(
+      &stream,
+      &inputParameters,
+      outputChannels > 0 ? &outputParameters : NULL, // NULL if no output is needed
+      sampleRate,
+      frames,
+      paClipOff, // or other relevant flags. Note: paNonInterleaved is NOT set here
+      recordCallback,
+      &recorder // User data passed to callback
+  );
   if (err != paNoError)
   {
     printf("PortAudio error: %s\n", Pa_GetErrorText(err));
@@ -167,10 +232,10 @@ int main(void)
     Pa_CloseStream(stream);
   }
 
-  if (wav)
-  {
-    closeWavFile(wav); // Make sure this updates the WAV header correctly.
-  }
+  // clean up wav files and track  memory
+  closeWavFiles(&recorder); // updates the WAV headers.
+  free(recorder.tracks);
+  recorder.tracks = NULL;
 
   err = Pa_Terminate();
   if (err != paNoError)
