@@ -145,7 +145,7 @@ WavFile *openWavFile(const char *filename, int sampleRate, int bitsPerSample, in
 
     return wav;
   }
-  else if (startTimeInSeconds >= 0)
+  else
   {
     fseek(wav->file, 0, SEEK_END);
     size_t currentFileSize = ftell(wav->file);
@@ -154,15 +154,6 @@ WavFile *openWavFile(const char *filename, int sampleRate, int bitsPerSample, in
     size_t overwriteStartPos = headerSize + (sampleRate * startTimeInSeconds * (bitsPerSample / 8) * channels);
     fseek(wav->file, overwriteStartPos, SEEK_SET);
 
-    return wav;
-  }
-  else
-  {
-    // File exists, prepare to append
-    // Move to the end of the file to skip existing header
-    fseek(wav->file, 0, SEEK_END);
-    size_t currentFileSize = ftell(wav->file);
-    wav->dataSize = currentFileSize - headerSize; // Retain original length
     return wav;
   }
 }
