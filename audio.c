@@ -160,7 +160,7 @@ int main(void)
   }
 
   // get device info
-  getAudioDeviceInfo();
+  // getAudioDeviceInfo();
 
   // setup recorder multi tracks
   // max track count for default input device
