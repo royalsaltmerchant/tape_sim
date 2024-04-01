@@ -31,6 +31,11 @@ void handleSignal(int signal)
 void getAudioDeviceInfo()
 {
   int numDevices = Pa_GetDeviceCount();
+  if (numDevices < 0)
+  {
+    printf("PortAudio error: %s\n", Pa_GetErrorText((PaError)numDevices));
+    exit(1);
+  }
   for (int i = 0; i < numDevices; i++)
   {
     const PaDeviceInfo *deviceInfo = Pa_GetDeviceInfo(i);
@@ -146,21 +151,27 @@ int main(void)
   PaStream *stream;
   MultiTrackRecorder recorder;
 
+  // init PA
+  err = Pa_Initialize();
+  if (err != paNoError)
+  {
+    printf("PortAudio error: %s\n", Pa_GetErrorText(err));
+    return 1;
+  }
+
+  // get device info
+  getAudioDeviceInfo();
+
   // setup recorder multi tracks
-  int trackCount = 1;
-  recorder.trackCount = trackCount;
+  // max track count for default input device
+  const PaDeviceInfo *deviceInfo = Pa_GetDeviceInfo(Pa_GetDefaultInputDevice());
+  int inputChannelCount = deviceInfo->maxInputChannels;
+  printf("max input channels: %d\n", inputChannelCount);
+  recorder.trackCount = inputChannelCount;
   recorder.tracks = (WavFile *)malloc(sizeof(WavFile) * recorder.trackCount);
 
   // init signal
   signal(SIGINT, handleSignal);
-
-  // init PA
-  err = Pa_Initialize();
-  if (err != paNoError)
-    return 1;
-
-  // get device info
-  getAudioDeviceInfo();
 
   // values
   int sampleRate = 48000;

@@ -1,5 +1,5 @@
 # TapeSim DAW
-A simple DAW
+Records wav files for max tracks of max inputs from default audio device
 
 ## Resources
 
