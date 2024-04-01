@@ -12,6 +12,8 @@
 #include <portaudio.h>
 
 // SETUP
+unsigned long startTimeInSeconds = 5;
+
 typedef struct
 {
   FILE *file;
@@ -102,6 +104,8 @@ WavFile *openWavFile(const char *filename, int sampleRate, int bitsPerSample, in
   // Check if the file already exists
   bool fileExists = access(filename, F_OK) != -1;
 
+  size_t headerSize = 44;
+
   // Open or create the file
   wav->file = fopen(filename, fileExists ? "r+b" : "wb");
   if (!wav->file)
@@ -110,42 +114,56 @@ WavFile *openWavFile(const char *filename, int sampleRate, int bitsPerSample, in
     return NULL;
   }
 
-  if (fileExists)
+  if (!fileExists)
+  {
+
+    // else create new
+    // init size
+    wav->dataSize = 0;
+    // Write RIFF header with placeholders for sizes
+    fwrite("RIFF", 1, 4, wav->file);     // "RIFF"
+    fwrite("----", 1, 4, wav->file);     // Placeholder for RIFF chunk size
+    fwrite("WAVEfmt ", 1, 8, wav->file); // "WAVEfmt "
+
+    int subchunk1Size = 16; // For PCM
+    short audioFormat = 1;  // PCM = 1 means no compression
+    short numChannels = channels;
+    int byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+    short blockAlign = numChannels * (bitsPerSample / 8);
+
+    fwrite(&subchunk1Size, sizeof(int), 1, wav->file);
+    fwrite(&audioFormat, sizeof(short), 1, wav->file);
+    fwrite(&numChannels, sizeof(short), 1, wav->file);
+    fwrite(&sampleRate, sizeof(int), 1, wav->file);
+    fwrite(&byteRate, sizeof(int), 1, wav->file);
+    fwrite(&blockAlign, sizeof(short), 1, wav->file);
+    fwrite(&bitsPerSample, sizeof(short), 1, wav->file);
+
+    // Write "data" subchunk header with a placeholder for the data size
+    fwrite("data", 1, 4, wav->file);
+    fwrite("----", 1, 4, wav->file); // Placeholder for data chunk size
+
+    return wav;
+  }
+  else if (startTimeInSeconds >= 0)
+  {
+    fseek(wav->file, 0, SEEK_END);
+    size_t currentFileSize = ftell(wav->file);
+    wav->dataSize = currentFileSize - headerSize; // Retain original length
+    // Prepare for overwriting by seeking to the intended start position
+    size_t overwriteStartPos = headerSize + (sampleRate * startTimeInSeconds * (bitsPerSample / 8) * channels);
+    fseek(wav->file, overwriteStartPos, SEEK_SET);
+
+    return wav;
+  }
+  else
   {
     // File exists, prepare to append
     // Move to the end of the file to skip existing header
     fseek(wav->file, 0, SEEK_END);
-    wav->dataSize = ftell(wav->file) - 44; // Assuming data starts at byte 44
+    wav->dataSize = ftell(wav->file) - headerSize; // Assuming data starts at byte 44
     return wav;
   }
-
-  // else create new
-  // init size
-  wav->dataSize = 0;
-  // Write RIFF header with placeholders for sizes
-  fwrite("RIFF", 1, 4, wav->file);     // "RIFF"
-  fwrite("----", 1, 4, wav->file);     // Placeholder for RIFF chunk size
-  fwrite("WAVEfmt ", 1, 8, wav->file); // "WAVEfmt "
-
-  int subchunk1Size = 16; // For PCM
-  short audioFormat = 1;  // PCM = 1 means no compression
-  short numChannels = channels;
-  int byteRate = sampleRate * numChannels * (bitsPerSample / 8);
-  short blockAlign = numChannels * (bitsPerSample / 8);
-
-  fwrite(&subchunk1Size, sizeof(int), 1, wav->file);
-  fwrite(&audioFormat, sizeof(short), 1, wav->file);
-  fwrite(&numChannels, sizeof(short), 1, wav->file);
-  fwrite(&sampleRate, sizeof(int), 1, wav->file);
-  fwrite(&byteRate, sizeof(int), 1, wav->file);
-  fwrite(&blockAlign, sizeof(short), 1, wav->file);
-  fwrite(&bitsPerSample, sizeof(short), 1, wav->file);
-
-  // Write "data" subchunk header with a placeholder for the data size
-  fwrite("data", 1, 4, wav->file);
-  fwrite("----", 1, 4, wav->file); // Placeholder for data chunk size
-
-  return wav;
 }
 
 void initRecordingTracks(MultiTrackRecorder *recorder)
@@ -168,8 +186,20 @@ void writeWavData(WavFile *wav, const void *data, size_t dataSize)
   if (!wav || !wav->file)
     return;
 
+  // Write the new data
   fwrite(data, 1, dataSize, wav->file);
-  wav->dataSize += dataSize;
+
+  // Determine the position after writing
+  size_t newPosition = ftell(wav->file);
+
+  // Update dataSize based on whether the new data extends beyond the original dataSize
+  size_t newDataSize = newPosition - 44; // Subtract header size to get audio data size
+  if (newDataSize > wav->dataSize)
+  {
+    wav->dataSize = newDataSize;
+  }
+
+  // Note: wav->dataSize is initially set based on the file's original dataSize when opened
 }
 
 void closeWavFiles(MultiTrackRecorder *recorder)
@@ -177,16 +207,17 @@ void closeWavFiles(MultiTrackRecorder *recorder)
   for (size_t i = 0; i < recorder->trackCount; i++)
   {
 
-    // Update RIFF chunk size at position 4
+    size_t finalDataSize = recorder->tracks[i].dataSize;
+
+    // Move to the start of the file size field
     fseek(recorder->tracks[i].file, 4, SEEK_SET);
-    int riffChunkSize = 4 + (8 + 16) + (8 + recorder->tracks[i].dataSize); // "WAVE" + ("fmt " chunk and size) + ("data" header and size)
-    fwrite(&riffChunkSize, 4, 1, recorder->tracks[i].file);
+    uint32_t fileSizeMinus8 = finalDataSize + 36; // Size of 'WAVEfmt ' and 'data' headers plus dataSize
+    fwrite(&fileSizeMinus8, sizeof(fileSizeMinus8), 1, recorder->tracks[i].file);
 
-    // Update data chunk size at position 40
+    // Move to the start of the data size field
     fseek(recorder->tracks[i].file, 40, SEEK_SET);
-    fwrite(&recorder->tracks[i].dataSize, 4, 1, recorder->tracks[i].file);
+    fwrite(&finalDataSize, sizeof(finalDataSize), 1, recorder->tracks[i].file);
 
-    // Close the file
     fclose(recorder->tracks[i].file);
   }
 }
