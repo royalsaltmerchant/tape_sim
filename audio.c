@@ -126,21 +126,27 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
   const unsigned char **buffers = (const unsigned char **)inputBuffer;
   MultiTrackRecorder *recorder = (MultiTrackRecorder *)userData;
 
-  // For each channel
+  // Assuming you have a suitable buffer allocated for accumulating the samples
+  // The buffer size needs to be at least framesPerBuffer * 3 bytes for each channel
+
   for (int channel = 0; channel < recorder->trackCount; ++channel)
   {
-    // Pointer to the current channel's data
     const unsigned char *channelData = buffers[channel];
+    unsigned char *writeBuffer = malloc(framesPerBuffer * 3); // Allocate buffer for the current channel
 
-    // For each frame, write the 24-bit sample (3 bytes) to the WAV file
+    // Accumulate the samples for the current channel into writeBuffer
     for (unsigned long frame = 0; frame < framesPerBuffer; ++frame)
     {
-      // Calculate the starting index for the current sample (3 bytes per sample)
       int byteIndex = frame * 3;
-      // Write the sample to the WAV file corresponding to the current channel
-      writeWavData(&recorder->tracks[channel], &channelData[byteIndex], 3);
+      memcpy(&writeBuffer[frame * 3], &channelData[byteIndex], 3);
     }
+
+    // Now, writeBuffer contains all the frames for the current channel, so write it all at once
+    writeWavData(&recorder->tracks[channel], writeBuffer, framesPerBuffer * 3);
+
+    free(writeBuffer);
   }
+
   return paContinue;
 }
 
