@@ -12,7 +12,7 @@
 #include <portaudio.h>
 
 // SETUP
-unsigned long startTimeInSeconds = 5;
+unsigned long startTimeInSeconds = 0;
 
 typedef struct
 {
@@ -116,9 +116,6 @@ WavFile *openWavFile(const char *filename, int sampleRate, int bitsPerSample, in
 
   if (!fileExists)
   {
-
-    // else create new
-    // init size
     wav->dataSize = 0;
     // Write RIFF header with placeholders for sizes
     fwrite("RIFF", 1, 4, wav->file);     // "RIFF"
