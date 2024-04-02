@@ -12,7 +12,7 @@
 #include <portaudio.h>
 
 // SETUP
-unsigned long startTimeInSeconds = 0;
+float startTimeInSeconds = 0;
 int sampleRate = 48000;
 int bitDepth = 24;
 
@@ -94,7 +94,64 @@ int getCharNonBlocking()
   return ch;
 }
 
-// END UTILIT FUNCTIONS
+float calculateRMS(const unsigned char *buffer, size_t framesPerBuffer)
+{
+  float sum = 0.0;
+  for (size_t i = 0; i < framesPerBuffer; i++)
+  {
+    // Convert 3 bytes to one 24-bit int
+    int sample24bit = (buffer[3 * i] << 8) | (buffer[3 * i + 1] << 16) | (buffer[3 * i + 2] << 24);
+    sample24bit >>= 8; // Convert to signed 32-bit int
+
+    // Now convert to float
+    float sampleFloat = sample24bit / (float)INT32_MAX;
+    sum += sampleFloat * sampleFloat;
+  }
+  float rms = sqrt(sum / framesPerBuffer);
+  return rms;
+}
+
+float rmsToDb(float rms)
+{
+  // Ensure rms is positive but non-zero to avoid log10(0)
+  if (rms <= 0)
+    rms = 1e-20;
+  float dbFS = 20.0 * log10(rms);
+  return dbFS; // This will naturally yield negative values for rms < 1
+}
+
+// END UTILITY FUNCTIONS
+
+void updateStartTime(float time)
+{
+  startTimeInSeconds = time;
+}
+
+void inputStartTime()
+{
+  float time;
+  printf("Enter new start time in seconds (current: %f): ", startTimeInSeconds);
+  if (scanf("%f", &time) == 1)
+  { // Ensure scanf successfully reads a float
+    // Validate the input time range
+    if (time >= 0 && time <= 3600)
+    { // 0 to 3600 seconds range
+      updateStartTime(time);
+      printf("Start time updated to %f seconds.\n", time);
+    }
+    else
+    {
+      printf("Invalid input: start time must be between 0 and 3600 seconds.\n");
+    }
+  }
+  else
+  {
+    // Clear the input buffer to prevent infinite loops in case of invalid input
+    while (getchar() != '\n')
+      ;
+    printf("Invalid input: please enter a numeric value.\n");
+  }
+}
 
 WavFile *openWavFile(const char *filename)
 {
@@ -148,7 +205,13 @@ WavFile *openWavFile(const char *filename)
     size_t currentFileSize = ftell(wav->file);
     wav->dataSize = currentFileSize - headerSize; // Retain original length
     // Prepare for overwriting by seeking to the intended start position
-    size_t overwriteStartPos = headerSize + (sampleRate * startTimeInSeconds * (bitDepth / 8) * numChannels);
+    size_t bytesPerSample = (bitDepth / 8) * numChannels;
+    // Calculate the exact sample offset
+    size_t sampleOffset = (size_t)(sampleRate * startTimeInSeconds);
+    // Convert sample offset to byte offset, ensuring it's aligned to start of a frame
+    size_t byteOffset = sampleOffset * bytesPerSample;
+    // Adjust for header size
+    size_t overwriteStartPos = headerSize + byteOffset;
     fseek(wav->file, overwriteStartPos, SEEK_SET);
 
     return wav;
@@ -205,32 +268,6 @@ void closeWavFiles(MultiTrackRecorder *recorder)
 
     fclose(recorder->tracks[i].file);
   }
-}
-
-float calculateRMS(const unsigned char *buffer, size_t framesPerBuffer)
-{
-  float sum = 0.0;
-  for (size_t i = 0; i < framesPerBuffer; i++)
-  {
-    // Convert 3 bytes to one 24-bit int
-    int sample24bit = (buffer[3 * i] << 8) | (buffer[3 * i + 1] << 16) | (buffer[3 * i + 2] << 24);
-    sample24bit >>= 8; // Convert to signed 32-bit int
-
-    // Now convert to float
-    float sampleFloat = sample24bit / (float)INT32_MAX;
-    sum += sampleFloat * sampleFloat;
-  }
-  float rms = sqrt(sum / framesPerBuffer);
-  return rms;
-}
-
-float rmsToDb(float rms)
-{
-  // Ensure rms is positive but non-zero to avoid log10(0)
-  if (rms <= 0)
-    rms = 1e-20;
-  float dbFS = 20.0 * log10(rms);
-  return dbFS; // This will naturally yield negative values for rms < 1
 }
 
 static int recordCallback(const void *inputBuffer, void *outputBuffer,
@@ -339,7 +376,8 @@ int main(void)
   }
 
   // start applicatin loop
-  printf("Press 'r' to start/stop recording. Press 'q' to quit.\n");
+  printf("COMMANDS:\n");
+  printf("- Press 'r' to start/stop recording.\n- Press 't' to input start time.\n- Press 'q' to quit.\n");
   while (true)
   {
     int ch = getCharNonBlocking();
@@ -352,6 +390,11 @@ int main(void)
         // clean up wav files and track  memory
         closeWavFiles(&recorder); // updates the WAV headers.
         isRecording = false;
+        // set start time to end of current recording
+        float totalAudioDataBytes = recorder.tracks[0].dataSize; // assuming that track 0 has data...
+        float bytesPerSecond = sampleRate * bitDepth / 8;
+        float newStartTime = totalAudioDataBytes / bytesPerSecond;
+        updateStartTime(newStartTime);
         printf("Recording stopped.\n");
       }
       else
@@ -369,6 +412,11 @@ int main(void)
         isRecording = true;
         printf("Recording started.\n");
       }
+    }
+    else if (ch == 't')
+    {
+      // allow user to input start time
+      inputStartTime();
     }
     else if (ch == 'q')
     { // Quit
