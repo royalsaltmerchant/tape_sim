@@ -307,7 +307,7 @@ void initAudio()
   // max track count for default input device
   int inputDevice = Pa_GetDefaultInputDevice();
   if (inputDevice == -1) {
-    inputDevice = 1;
+    inputDevice = 0;
   }
   const PaDeviceInfo *deviceInfo = Pa_GetDeviceInfo(inputDevice);
 
