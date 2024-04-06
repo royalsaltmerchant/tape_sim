@@ -290,12 +290,18 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
 
 void initRecordingStream()
 {
+  int inputDevice = Pa_GetDefaultInputDevice();
+  if (inputDevice == -1)
+  {
+    inputDevice = 0;
+  }
+
   PaError err;
   // Stream parameters
   PaStreamParameters inputParameters,
       outputParameters;
   inputParameters.channelCount = recorder.trackCount;
-  inputParameters.device = Pa_GetDefaultInputDevice();                                                 // or another specific device
+  inputParameters.device = inputDevice;                                                 // or another specific device
   inputParameters.sampleFormat = paInt24 | paNonInterleaved;                                           // Correct way to combine flags
   inputParameters.suggestedLatency = Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency; // lowest latency
   inputParameters.hostApiSpecificStreamInfo = NULL;                                                    // Typically NULL
@@ -320,16 +326,6 @@ void initRecordingStream()
 
 void initAudio()
 {
-  char cwd[1024];
-  if (getcwd(cwd, sizeof(cwd)) != NULL)
-  {
-    printf("Current working dir: %s\n", cwd);
-  }
-  else
-  {
-    perror("getcwd() error");
-  }
-
   PaError err;
   // init PA
   err = Pa_Initialize();
