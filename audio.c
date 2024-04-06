@@ -226,6 +226,7 @@ void initRecordingTracks(MultiTrackRecorder *recorder)
     snprintf(filename, sizeof(filename), "track%zu.wav", i + 1);
     WavFile *wav = openWavFile(filename);
     recorder->tracks[i] = *wav;
+    free(wav);
   }
 }
 
