@@ -191,14 +191,26 @@ WavFile *openWavFile(const char *filename)
   }
 }
 
-void initRecordingTracks(MultiTrackRecorder *recorder)
+void initRecordingTracks()
 {
-  for (size_t i = 0; i < recorder->trackCount; i++)
+  for (size_t i = 0; i < recorder.trackCount; i++)
   {
     char filename[256];
     snprintf(filename, sizeof(filename), "track%zu.wav", i + 1);
     WavFile *wav = openWavFile(filename);
-    recorder->tracks[i] = *wav;
+    recorder.tracks[i] = *wav;
+    free(wav);
+  }
+}
+
+void initPlayerTracks()
+{
+  for (size_t i = 0; i < player.trackCount; i++)
+  {
+    char filename[256];
+    snprintf(filename, sizeof(filename), "track%zu.wav", i + 1);
+    WavFile *wav = openWavFile(filename);
+    player.tracks[i] = *wav;
     free(wav);
   }
 }
@@ -224,23 +236,23 @@ void writeWavData(WavFile *wav, const void *data, size_t dataSize)
   // Note: wav->dataSize is initially set based on the file's original dataSize when opened
 }
 
-void closeWavFiles(MultiTrackRecorder *recorder)
+void closeWavFiles()
 {
-  for (size_t i = 0; i < recorder->trackCount; i++)
+  for (size_t i = 0; i < recorder.trackCount; i++)
   {
 
-    size_t finalDataSize = recorder->tracks[i].dataSize;
+    size_t finalDataSize = recorder.tracks[i].dataSize;
 
     // Move to the start of the file size field
-    fseek(recorder->tracks[i].file, 4, SEEK_SET);
+    fseek(recorder.tracks[i].file, 4, SEEK_SET);
     uint32_t fileSizeMinus8 = finalDataSize + 36; // Size of 'WAVEfmt ' and 'data' headers plus dataSize
-    fwrite(&fileSizeMinus8, sizeof(fileSizeMinus8), 1, recorder->tracks[i].file);
+    fwrite(&fileSizeMinus8, sizeof(fileSizeMinus8), 1, recorder.tracks[i].file);
 
     // Move to the start of the data size field
-    fseek(recorder->tracks[i].file, 40, SEEK_SET);
-    fwrite(&finalDataSize, sizeof(finalDataSize), 1, recorder->tracks[i].file);
+    fseek(recorder.tracks[i].file, 40, SEEK_SET);
+    fwrite(&finalDataSize, sizeof(finalDataSize), 1, recorder.tracks[i].file);
 
-    fclose(recorder->tracks[i].file);
+    fclose(recorder.tracks[i].file);
   }
 }
 
@@ -252,7 +264,7 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
 {
   // Cast inputBuffer to an array of pointers to byte arrays (one per channel)
   const unsigned char **buffers = (const unsigned char **)inputBuffer;
-  MultiTrackRecorder *recorder = (MultiTrackRecorder *)userData;
+  Recorder *recorder = (Recorder *)userData;
 
   // Assuming you have a suitable buffer allocated for accumulating the samples
   // The buffer size needs to be at least framesPerBuffer * 3 bytes for each channel
@@ -289,6 +301,33 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
   return paContinue;
 }
 
+static int playbackCallback(const void *inputBuffer, void *outputBuffer,
+                            unsigned long framesPerBuffer,
+                            const PaStreamCallbackTimeInfo *timeInfo,
+                            PaStreamCallbackFlags statusFlags,
+                            void *userData)
+{
+  Player *player = (Player *)userData;
+  float *out = (float *)outputBuffer;
+
+  for (unsigned long i = 0; i < framesPerBuffer; i++)
+  {
+    if (player->playbackPosition < player->bufferLength)
+    {
+      // Interleave left and right channel data for true stereo playback
+      *out++ = player->leftChannelBuffer[player->playbackPosition];  // Left channel
+      *out++ = player->rightChannelBuffer[player->playbackPosition]; // Right channel
+      player->playbackPosition++;
+    }
+    else
+    {
+      *out++ = 0; // Fill remainder with silence if buffer end reached
+      *out++ = 0;
+    }
+  }
+  return paContinue;
+}
+
 void initRecordingStream()
 {
   int inputDevice = Pa_GetDefaultInputDevice();
@@ -302,7 +341,7 @@ void initRecordingStream()
   PaStreamParameters inputParameters,
       outputParameters;
   inputParameters.channelCount = recorder.trackCount;
-  inputParameters.device = inputDevice;                                                 // or another specific device
+  inputParameters.device = inputDevice;                                                                // or another specific device
   inputParameters.sampleFormat = paInt24 | paNonInterleaved;                                           // Correct way to combine flags
   inputParameters.suggestedLatency = Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency; // lowest latency
   inputParameters.hostApiSpecificStreamInfo = NULL;                                                    // Typically NULL
@@ -318,6 +357,89 @@ void initRecordingStream()
       recordCallback,
       &recorder // User data passed to callback
   );
+  if (err != paNoError)
+  {
+    printf("PortAudio error: %s\n", Pa_GetErrorText(err));
+    exit(1);
+  }
+}
+
+void readTrackDataToBuffer(WavFile *track, float *buffer, size_t totalSamples)
+{
+  fseek(track->file, 44, SEEK_SET);
+
+  uint8_t sampleBytes[3];
+  int32_t sample24bit;
+  for (size_t i = 0; i < totalSamples; i++)
+  {
+    // Read 3 bytes per sample
+    if (fread(sampleBytes, sizeof(uint8_t), 3, track->file) == 3)
+    {
+      // Convert bytes to a 24-bit signed int
+      // Note: Assuming little-endian byte order
+      sample24bit = (int32_t)(sampleBytes[0] << 8 | sampleBytes[1] << 16 | sampleBytes[2] << 24) >> 8;
+
+      // Convert to floating point in the range of -1.0 to 1.0
+      buffer[i] = sample24bit / (float)(1 << 23);
+    }
+    else
+    {
+      // End of file or read error; fill the rest with zeros
+      for (; i < totalSamples; i++)
+      {
+        buffer[i] = 0.0f;
+      }
+      break;
+    }
+  }
+}
+
+void mixTracksIntoStereoBuffer()
+{
+  // Calculate the total length of the buffers required
+  // For simplicity, assume all tracks are the same length and format
+  size_t totalSamples = player.tracks[0].dataSize / (bitDepth / 8);
+
+  // Allocate memory for the stereo buffers
+  player.leftChannelBuffer = malloc(totalSamples * sizeof(float));
+  player.rightChannelBuffer = malloc(totalSamples * sizeof(float));
+  player.bufferLength = totalSamples;
+  // Initialize the stereo buffers to zero
+  memset(player.leftChannelBuffer, 0, totalSamples * sizeof(float));
+  memset(player.rightChannelBuffer, 0, totalSamples * sizeof(float));
+
+  // Temporary buffer for reading track data
+  float *tempBuffer = malloc(totalSamples * sizeof(float));
+
+  // Mix each track into the stereo buffers
+  for (size_t i = 0; i < player.trackCount; i++)
+  {
+    // that reads track data into a buffer
+    readTrackDataToBuffer(&player.tracks[i], tempBuffer, totalSamples);
+
+    // Mix this track into the stereo buffers
+    for (size_t j = 0; j < totalSamples; j++)
+    {
+      // For simplicity, mix equally into both channels
+      player.leftChannelBuffer[j] += tempBuffer[j] / player.trackCount;
+      player.rightChannelBuffer[j] += tempBuffer[j] / player.trackCount;
+    }
+  }
+
+  // Cleanup
+  free(tempBuffer);
+}
+
+void initPlayerStream()
+{
+  initPlayerTracks();
+  // Mix the tracks into a single stereo buffer
+  mixTracksIntoStereoBuffer();
+
+  player.playbackPosition = 0;
+
+  PaError err = Pa_OpenDefaultStream(&playingStream, 0, 2, paFloat32, sampleRate,
+                                     frames, playbackCallback, &player);
   if (err != paNoError)
   {
     printf("PortAudio error: %s\n", Pa_GetErrorText(err));
@@ -357,21 +479,28 @@ void initAudio()
   }
   printf("max input channels: %d\n", inputChannelCount);
 
-  recorder.trackCount = inputChannelCount;                                    // we want to make as many tracks as there are input channels on the default input device
-  recorder.tracks = (WavFile *)malloc(sizeof(WavFile) * recorder.trackCount); // make room for as many wav files as needed tracks
+  // init tracks and track count for recording and playback
+  recorder.trackCount = inputChannelCount;
+  recorder.tracks = malloc(sizeof(WavFile) * recorder.trackCount); // make room for as many wav files as needed tracks
+  player.trackCount = inputChannelCount;
+  player.tracks = malloc(sizeof(WavFile) * player.trackCount);
 }
 
 void cleanupAudio()
 {
   PaError err;
+  // safety close streams
   Pa_StopStream(recordingStream);
   Pa_CloseStream(recordingStream);
-  // clean up wav files and track  memory
-  closeWavFiles(&recorder); // updates the WAV headers.
+  Pa_StopStream(playingStream);
+  Pa_CloseStream(playingStream);
+
+  // clean up wav files
+  closeWavFiles();
 
   // free track memory
   free(recorder.tracks);
-  recorder.tracks = NULL;
+  free(player.tracks);
 
   // close out PA
   err = Pa_Terminate();
@@ -387,7 +516,7 @@ void onStopRecording()
   Pa_StopStream(recordingStream);
   Pa_CloseStream(recordingStream);
   // clean up wav files and track  memory
-  closeWavFiles(&recorder); // updates the WAV headers.
+  closeWavFiles(); // updates the WAV headers.
 
   // set start time to end of current recording
   float totalAudioDataBytes = recorder.tracks[0].dataSize; // assuming that track 0 has data...
@@ -403,9 +532,8 @@ void onStartRecording()
   // init recording stream
   initRecordingStream();
   // init or re-init all wav track files with header data
-  initRecordingTracks(&recorder);
+  initRecordingTracks();
   // Start recording
-  // Make sure to reinitialize the stream if needed
   err = Pa_StartStream(recordingStream);
   if (err != paNoError)
   {
@@ -416,9 +544,28 @@ void onStartRecording()
   printf("Recording started.\n");
 }
 
+void onStartPlaying()
+{
+  PaError err;
+  // init playback stream
+  initPlayerStream();
+  // start playback
+  err = Pa_StartStream(playingStream);
+  if (err != paNoError)
+  {
+    printf("PortAudio error: %s\n", Pa_GetErrorText(err));
+    exit(1);
+  }
+
+  printf("Playing started.\n");
+}
+
 // int main() {
 //   initAudio();
 //   onStartRecording();
 //   sleep(3);
+//   onStopRecording();
+//   onStartPlaying();
+//   sleep(5);
 //   cleanupAudio();
 // }

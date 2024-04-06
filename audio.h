@@ -18,7 +18,6 @@ int sampleRate = 48000;
 int bitDepth = 24;
 PaStream *recordingStream;
 PaStream *playingStream;
-bool isRecording = false;
 int frames = 256;
 
 typedef struct
@@ -31,15 +30,24 @@ typedef struct
 {
   WavFile *tracks;
   size_t trackCount;
-} MultiTrackRecorder;
+} Recorder;
 
-MultiTrackRecorder recorder;
+typedef struct
+{
+  WavFile *tracks;
+  size_t trackCount;
+  float *leftChannelBuffer;  // Buffer for left channel audio data
+  float *rightChannelBuffer; // Buffer for right channel audio data
+  size_t bufferLength;       // Length of the buffer
+  int playbackPosition;      // Current playback position in the buffer
+} Player;
+
+Recorder recorder;
+Player player;
 
 // functions
 void initAudio();
-void initRecordingStream();
 void cleanupAudio();
-void checkDeviceCountAndGetAudioDeviceInfo();
 void onStopRecording();
 void onStartRecording();
 
