@@ -298,6 +298,10 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
     free(writeBuffer);
   }
 
+  // Update the start time to reflect the current playback position
+  float timeIncrement = (float)framesPerBuffer / sampleRate;
+  startTimeInSeconds += timeIncrement;
+
   return paContinue;
 }
 
@@ -325,6 +329,11 @@ static int playbackCallback(const void *inputBuffer, void *outputBuffer,
       *out++ = 0;
     }
   }
+
+  // Update the start time to reflect the current playback position
+  float timeIncrement = (float)framesPerBuffer / sampleRate;
+  startTimeInSeconds += timeIncrement;
+
   return paContinue;
 }
 
@@ -436,7 +445,18 @@ void initPlayerStream()
   // Mix the tracks into a single stereo buffer
   mixTracksIntoStereoBuffer();
 
-  player.playbackPosition = 0;
+  // Calculate playback start position based on startTimeInSeconds
+  // Assuming each sample in the buffer corresponds to a frame of audio
+  size_t startPosition = (size_t)(sampleRate * startTimeInSeconds);
+  player.playbackPosition = startPosition;
+
+  // Note: Ensure that this does not exceed the bufferLength.
+  // If startPosition is greater than bufferLength, you might want to handle it as an error or reset to a valid position.
+  if (player.playbackPosition >= player.bufferLength)
+  {
+    printf("Start time exceeds the length of the audio buffer. Resetting to start.\n");
+    player.playbackPosition = 0;
+  }
 
   PaError err = Pa_OpenDefaultStream(&playingStream, 0, 2, paFloat32, sampleRate,
                                      frames, playbackCallback, &player);
@@ -518,11 +538,6 @@ void onStopRecording()
   // clean up wav files and track  memory
   closeWavFiles(); // updates the WAV headers.
 
-  // set start time to end of current recording
-  float totalAudioDataBytes = recorder.tracks[0].dataSize; // assuming that track 0 has data...
-  float bytesPerSecond = sampleRate * bitDepth / 8;
-  float newStartTime = totalAudioDataBytes / bytesPerSecond;
-  updateStartTime(newStartTime);
   printf("Recording stopped.\n");
 }
 
@@ -560,12 +575,25 @@ void onStartPlaying()
   printf("Playing started.\n");
 }
 
+void onStopPlaying()
+{
+  // Stop recording
+  Pa_StopStream(playingStream);
+  Pa_CloseStream(playingStream);
+
+  printf("Playing stopped.\n");
+}
+
 // int main() {
 //   initAudio();
+
+//   updateStartTime(2.00);
+//   onStartPlaying();
+//   sleep(1);
+//   onStopPlaying();
 //   onStartRecording();
 //   sleep(3);
 //   onStopRecording();
-//   onStartPlaying();
-//   sleep(5);
+  
 //   cleanupAudio();
 // }
