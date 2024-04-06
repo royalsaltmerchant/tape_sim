@@ -129,7 +129,7 @@ void inputStartTime()
 WavFile *openWavFile(const char *filename)
 {
   // allocate the memory
-  WavFile *wav = (WavFile *)malloc(sizeof(WavFile));
+  WavFile *wav = malloc(sizeof(WavFile));
   if (!wav)
     return NULL;
 
@@ -199,6 +199,7 @@ void initRecordingTracks(MultiTrackRecorder *recorder)
     snprintf(filename, sizeof(filename), "track%zu.wav", i + 1);
     WavFile *wav = openWavFile(filename);
     recorder->tracks[i] = *wav;
+    free(wav);
   }
 }
 
