@@ -1,5 +1,5 @@
-#ifndef ENGINE_H
-#define ENGINE_H
+#ifndef AUDIO_H
+#define AUDIO_H
 
 #include <stdio.h>
 #include <stdlib.h>
