@@ -288,40 +288,9 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
   return paContinue;
 }
 
-void initAudio()
+void initRecordingStream()
 {
   PaError err;
-  // init PA
-  err = Pa_Initialize();
-  if (err != paNoError)
-  {
-    printf("PortAudio error: %s\n", Pa_GetErrorText(err));
-    exit(1);
-  }
-
-
-  // get device info and check device count to ensure it is not negative
-  checkDeviceCountAndGetAudioDeviceInfo();
-
-  // setup recorder multi tracks
-  // max track count for default input device
-  int inputDevice = Pa_GetDefaultInputDevice();
-  if (inputDevice == -1) {
-    inputDevice = 0;
-  }
-  const PaDeviceInfo *deviceInfo = Pa_GetDeviceInfo(inputDevice);
-
-  int inputChannelCount = deviceInfo->maxInputChannels;
-  // handle input count error
-  if (inputChannelCount <= 0 || inputChannelCount > 64)
-  {
-    fprintf(stderr, "Error: Invalid number of input channels (%d). Must be between 1 and 64.\n", inputChannelCount);
-    exit(1);
-  }
-  printf("max input channels: %d\n", inputChannelCount);
-  recorder.trackCount = inputChannelCount;                                    // we want to make as many tracks as there are input channels on the default input device
-  recorder.tracks = (WavFile *)malloc(sizeof(WavFile) * recorder.trackCount); // make room for as many wav files as needed tracks
-
   // Stream parameters
   PaStreamParameters inputParameters,
       outputParameters;
@@ -333,7 +302,7 @@ void initAudio()
 
   // start PA audio stream
   err = Pa_OpenStream(
-      &stream,
+      &recordingStream,
       &inputParameters,
       NULL, // NULL if no output is needed
       sampleRate,
@@ -349,13 +318,60 @@ void initAudio()
   }
 }
 
+void initAudio()
+{
+  char cwd[1024];
+  if (getcwd(cwd, sizeof(cwd)) != NULL)
+  {
+    printf("Current working dir: %s\n", cwd);
+  }
+  else
+  {
+    perror("getcwd() error");
+  }
+
+  PaError err;
+  // init PA
+  err = Pa_Initialize();
+  if (err != paNoError)
+  {
+    printf("PortAudio error: %s\n", Pa_GetErrorText(err));
+    exit(1);
+  }
+
+  // get device info and check device count to ensure it is not negative
+  checkDeviceCountAndGetAudioDeviceInfo();
+
+  // setup recorder multi tracks
+  // max track count for default input device
+  int inputDevice = Pa_GetDefaultInputDevice();
+  if (inputDevice == -1)
+  {
+    inputDevice = 0;
+  }
+  const PaDeviceInfo *deviceInfo = Pa_GetDeviceInfo(inputDevice);
+
+  int inputChannelCount = deviceInfo->maxInputChannels;
+  // handle input count error
+  if (inputChannelCount <= 0 || inputChannelCount > 64)
+  {
+    fprintf(stderr, "Error: Invalid number of input channels (%d). Must be between 1 and 64.\n", inputChannelCount);
+    exit(1);
+  }
+  printf("max input channels: %d\n", inputChannelCount);
+
+  recorder.trackCount = inputChannelCount;                                    // we want to make as many tracks as there are input channels on the default input device
+  recorder.tracks = (WavFile *)malloc(sizeof(WavFile) * recorder.trackCount); // make room for as many wav files as needed tracks
+}
+
 void cleanupAudio()
 {
   PaError err;
-  Pa_StopStream(stream);
-  Pa_CloseStream(stream);
+  Pa_StopStream(recordingStream);
+  Pa_CloseStream(recordingStream);
   // clean up wav files and track  memory
   closeWavFiles(&recorder); // updates the WAV headers.
+
   // free track memory
   free(recorder.tracks);
   recorder.tracks = NULL;
@@ -371,11 +387,10 @@ void cleanupAudio()
 void onStopRecording()
 {
   // Stop recording
-  Pa_StopStream(stream);
+  Pa_StopStream(recordingStream);
+  Pa_CloseStream(recordingStream);
   // clean up wav files and track  memory
   closeWavFiles(&recorder); // updates the WAV headers.
-
-  // isRecording = false;
 
   // set start time to end of current recording
   float totalAudioDataBytes = recorder.tracks[0].dataSize; // assuming that track 0 has data...
@@ -388,18 +403,18 @@ void onStopRecording()
 void onStartRecording()
 {
   PaError err;
+  // init recording stream
+  initRecordingStream();
   // init or re-init all wav track files with header data
   initRecordingTracks(&recorder);
   // Start recording
   // Make sure to reinitialize the stream if needed
-  err = Pa_StartStream(stream);
+  err = Pa_StartStream(recordingStream);
   if (err != paNoError)
   {
     printf("PortAudio error: %s\n", Pa_GetErrorText(err));
     exit(1);
   }
-
-  // isRecording = true;
 
   printf("Recording started.\n");
 }

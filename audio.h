@@ -16,7 +16,8 @@
 float startTimeInSeconds = 0;
 int sampleRate = 48000;
 int bitDepth = 24;
-PaStream *stream;
+PaStream *recordingStream;
+PaStream *playingStream;
 bool isRecording = false;
 int frames = 256;
 
@@ -34,9 +35,9 @@ typedef struct
 
 MultiTrackRecorder recorder;
 
-
 // functions
 void initAudio();
+void initRecordingStream();
 void cleanupAudio();
 void checkDeviceCountAndGetAudioDeviceInfo();
 void onStopRecording();
