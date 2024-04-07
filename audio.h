@@ -50,5 +50,11 @@ void initAudio();
 void cleanupAudio();
 void onStopRecording();
 void onStartRecording();
+void onStartPlaying();
+void onStopPlaying();
+void onRewind();
+void onFastForward();
+void updateStartTime(float time);
+float getCurrentStartTimeInSeconds();
 
 #endif

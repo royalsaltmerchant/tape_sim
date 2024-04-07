@@ -20,15 +20,15 @@ void checkDeviceCountAndGetAudioDeviceInfo()
 }
 
 // Checks if at least `interval` milliseconds have passed since last true return
-bool canPrintAgain(int interval)
+bool canDoAgain(int interval)
 {
-  static clock_t lastPrintTime = 0;
+  static clock_t lastDoneTime = 0;
   clock_t currentTime = clock();
-  clock_t elapsed = ((currentTime - lastPrintTime) * 1000) / CLOCKS_PER_SEC;
+  clock_t elapsed = ((currentTime - lastDoneTime) * 1000) / CLOCKS_PER_SEC;
 
   if (elapsed >= interval)
   {
-    lastPrintTime = currentTime;
+    lastDoneTime = currentTime;
     return true;
   }
   return false;
@@ -98,6 +98,11 @@ float rmsToDb(float rms)
 void updateStartTime(float time)
 {
   startTimeInSeconds = time;
+}
+
+float getCurrentStartTimeInSeconds()
+{
+  return startTimeInSeconds;
 }
 
 void inputStartTime()
@@ -275,7 +280,7 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
     float rms = calculateRMS(buffers[channel], framesPerBuffer);
     float dbLevel = rmsToDb(rms);
     // Rate-limiting the print operation
-    if (canPrintAgain(1))
+    if (canDoAgain(1))
     { // 10 milliseconds
       printf("Channel %d: dB Level = %f\n", channel, dbLevel);
     }
@@ -456,6 +461,7 @@ void initPlayerStream()
   {
     printf("Start time exceeds the length of the audio buffer. Resetting to start.\n");
     player.playbackPosition = 0;
+    startTimeInSeconds = 0;
   }
 
   PaError err = Pa_OpenDefaultStream(&playingStream, 0, 2, paFloat32, sampleRate,
@@ -530,6 +536,33 @@ void cleanupAudio()
   }
 }
 
+void onRewind()
+{
+  // Adjust time backwards by 0.1 seconds as an example
+  if (startTimeInSeconds > 0.1)
+  {
+    startTimeInSeconds -= 0.1;
+  }
+  else
+  {
+    startTimeInSeconds = 0.0;
+  }
+}
+
+void onFastForward()
+{
+  // Adjust time forwards by 0.1 seconds, with 216000 seconds as 60 hours
+  if (startTimeInSeconds < 216000 - 0.1)
+  {
+    startTimeInSeconds += 0.1;
+  }
+  else
+  {
+    // Optionally loop around or cap at 216000
+    startTimeInSeconds = 216000;
+  }
+}
+
 void onStopRecording()
 {
   // Stop recording
@@ -594,6 +627,6 @@ void onStopPlaying()
 //   onStartRecording();
 //   sleep(3);
 //   onStopRecording();
-  
+
 //   cleanupAudio();
 // }
