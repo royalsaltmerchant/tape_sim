@@ -107,6 +107,8 @@ struct ContentView: View {
     }
     
     func rewind() {
+		if (isPlaying) {stop()}
+		if (isFastForwarding) {stopFastForward()}
         isRewinding = true;
         onRewind()
     }
@@ -116,6 +118,8 @@ struct ContentView: View {
 	}
     
     func fastForward() {
+		if (isPlaying) {stop()}
+		if (isRewinding) {stopRewind()}
 		isFastForwarding = true;
         onFastForward()
     }
