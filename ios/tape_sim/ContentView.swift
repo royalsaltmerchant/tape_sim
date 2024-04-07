@@ -31,22 +31,22 @@ struct ContentView: View {
             
             HStack {
                 Button(action: rewind) {
-                    Label("Rewind", systemImage: "gobackward")
+                    Label("REW", systemImage: "gobackward")
                 }
                 .buttonStyle(ActionButtonStyle(backgroundColor: .blue))
                 
                 Button(action: playOrRecord) {
-                    Label(isRecordingEnabled ? "Record" : "Play", systemImage: isRecordingEnabled ? "record.circle" : "play.circle")
+                    Label(isRecordingEnabled ? "REC" : "PLAY", systemImage: isRecordingEnabled ? "record.circle" : "play.circle")
                 }
                 .buttonStyle(ActionButtonStyle(backgroundColor: isRecordingEnabled ? .red : .green))
                 
                 Button(action: stop) {
-                    Label("Stop", systemImage: "stop.circle")
+                    Label("STOP", systemImage: "stop.circle")
                 }
                 .buttonStyle(ActionButtonStyle(backgroundColor: .gray))
                 
                 Button(action: fastForward) {
-                    Label("Fast Forward", systemImage: "goforward")
+                    Label("FWD", systemImage: "goforward")
                 }
                 .buttonStyle(ActionButtonStyle(backgroundColor: .blue))
             }
