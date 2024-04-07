@@ -1,0 +1,398 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		E926FF8B2BC0BD5200C6AF96 /* libportaudio.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E926FF7E2BC0A3BC00C6AF96 /* libportaudio.dylib */; };
+		E926FF8E2BC0C11B00C6AF96 /* audio.c in Sources */ = {isa = PBXBuildFile; fileRef = E926FF8C2BC0C11B00C6AF96 /* audio.c */; };
+		E9CCE8922BC0908D00EEB820 /* tape_simApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CCE8912BC0908D00EEB820 /* tape_simApp.swift */; };
+		E9CCE8942BC0908D00EEB820 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CCE8932BC0908D00EEB820 /* ContentView.swift */; };
+		E9CCE8962BC0908F00EEB820 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9CCE8952BC0908F00EEB820 /* Assets.xcassets */; };
+		E9CCE8992BC0908F00EEB820 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9CCE8982BC0908F00EEB820 /* Preview Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		E9078C982BC0F1B2009BEFFD /* tape-sim-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "tape-sim-Info.plist"; sourceTree = SOURCE_ROOT; };
+		E926FF7C2BC0A1E200C6AF96 /* libportaudio.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libportaudio.a; path = ../../../../../../usr/local/Cellar/portaudio/19.7.0/lib/libportaudio.a; sourceTree = "<group>"; };
+		E926FF7E2BC0A3BC00C6AF96 /* libportaudio.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libportaudio.dylib; path = ../../../../../../usr/local/Cellar/portaudio/19.7.0/lib/libportaudio.dylib; sourceTree = "<group>"; };
+		E926FF872BC0A98D00C6AF96 /* portaudio.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = portaudio.h; path = ../../../../../../usr/local/Cellar/portaudio/19.7.0/include/portaudio.h; sourceTree = "<group>"; };
+		E926FF8C2BC0C11B00C6AF96 /* audio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = audio.c; path = ../../audio.c; sourceTree = "<group>"; };
+		E926FF8D2BC0C11B00C6AF96 /* audio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = audio.h; path = ../../audio.h; sourceTree = "<group>"; };
+		E9CCE88E2BC0908D00EEB820 /* tape_sim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = tape_sim.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E9CCE8912BC0908D00EEB820 /* tape_simApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = tape_simApp.swift; sourceTree = "<group>"; };
+		E9CCE8932BC0908D00EEB820 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		E9CCE8952BC0908F00EEB820 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E9CCE8982BC0908F00EEB820 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		E9CCE89A2BC0908F00EEB820 /* tape_sim.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = tape_sim.entitlements; sourceTree = "<group>"; };
+		E9CCE8A02BC092B600EEB820 /* tape_sim-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "tape_sim-Bridging-Header.h"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E9CCE88B2BC0908D00EEB820 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E926FF8B2BC0BD5200C6AF96 /* libportaudio.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E926FF7B2BC0A1E200C6AF96 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E926FF872BC0A98D00C6AF96 /* portaudio.h */,
+				E926FF7E2BC0A3BC00C6AF96 /* libportaudio.dylib */,
+				E926FF7C2BC0A1E200C6AF96 /* libportaudio.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		E9CCE8852BC0908D00EEB820 = {
+			isa = PBXGroup;
+			children = (
+				E9CCE8902BC0908D00EEB820 /* tape_sim */,
+				E9CCE88F2BC0908D00EEB820 /* Products */,
+				E926FF7B2BC0A1E200C6AF96 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		E9CCE88F2BC0908D00EEB820 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E9CCE88E2BC0908D00EEB820 /* tape_sim.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E9CCE8902BC0908D00EEB820 /* tape_sim */ = {
+			isa = PBXGroup;
+			children = (
+				E9078C982BC0F1B2009BEFFD /* tape-sim-Info.plist */,
+				E926FF8C2BC0C11B00C6AF96 /* audio.c */,
+				E926FF8D2BC0C11B00C6AF96 /* audio.h */,
+				E9CCE8A02BC092B600EEB820 /* tape_sim-Bridging-Header.h */,
+				E9CCE8912BC0908D00EEB820 /* tape_simApp.swift */,
+				E9CCE8932BC0908D00EEB820 /* ContentView.swift */,
+				E9CCE8952BC0908F00EEB820 /* Assets.xcassets */,
+				E9CCE89A2BC0908F00EEB820 /* tape_sim.entitlements */,
+				E9CCE8972BC0908F00EEB820 /* Preview Content */,
+			);
+			path = tape_sim;
+			sourceTree = "<group>";
+		};
+		E9CCE8972BC0908F00EEB820 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				E9CCE8982BC0908F00EEB820 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E9CCE88D2BC0908D00EEB820 /* tape_sim */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E9CCE89D2BC0908F00EEB820 /* Build configuration list for PBXNativeTarget "tape_sim" */;
+			buildPhases = (
+				E9CCE88A2BC0908D00EEB820 /* Sources */,
+				E9CCE88B2BC0908D00EEB820 /* Frameworks */,
+				E9CCE88C2BC0908D00EEB820 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = tape_sim;
+			productName = tape_sim;
+			productReference = E9CCE88E2BC0908D00EEB820 /* tape_sim.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E9CCE8862BC0908D00EEB820 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1520;
+				LastUpgradeCheck = 1520;
+				TargetAttributes = {
+					E9CCE88D2BC0908D00EEB820 = {
+						CreatedOnToolsVersion = 15.2;
+						LastSwiftMigration = 1520;
+					};
+				};
+			};
+			buildConfigurationList = E9CCE8892BC0908D00EEB820 /* Build configuration list for PBXProject "tape_sim" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E9CCE8852BC0908D00EEB820;
+			productRefGroup = E9CCE88F2BC0908D00EEB820 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E9CCE88D2BC0908D00EEB820 /* tape_sim */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E9CCE88C2BC0908D00EEB820 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E9CCE8992BC0908F00EEB820 /* Preview Assets.xcassets in Resources */,
+				E9CCE8962BC0908F00EEB820 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E9CCE88A2BC0908D00EEB820 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E926FF8E2BC0C11B00C6AF96 /* audio.c in Sources */,
+				E9CCE8942BC0908D00EEB820 /* ContentView.swift in Sources */,
+				E9CCE8922BC0908D00EEB820 /* tape_simApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		E9CCE89B2BC0908F00EEB820 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.6;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		E9CCE89C2BC0908F00EEB820 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.6;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		E9CCE89E2BC0908F00EEB820 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = tape_sim/tape_sim.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"tape_sim/Preview Content\"";
+				DEVELOPMENT_TEAM = YZ5DX6JCCT;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				"HEADER_SEARCH_PATHS[arch=*]" = /usr/local/opt/portaudio/lib;
+				INFOPLIST_FILE = "tape-sim-Info.plist";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/opt/portaudio/lib,
+					/usr/local/Cellar/portaudio/19.7.0/lib,
+				);
+				MACH_O_TYPE = mh_execute;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.salt.tape-sim";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "tape_sim/tape_sim-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E9CCE89F2BC0908F00EEB820 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = tape_sim/tape_sim.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"tape_sim/Preview Content\"";
+				DEVELOPMENT_TEAM = YZ5DX6JCCT;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				"HEADER_SEARCH_PATHS[arch=*]" = /usr/local/opt/portaudio/lib;
+				INFOPLIST_FILE = "tape-sim-Info.plist";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/opt/portaudio/lib,
+					/usr/local/Cellar/portaudio/19.7.0/lib,
+				);
+				MACH_O_TYPE = mh_execute;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.salt.tape-sim";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "tape_sim/tape_sim-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E9CCE8892BC0908D00EEB820 /* Build configuration list for PBXProject "tape_sim" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E9CCE89B2BC0908F00EEB820 /* Debug */,
+				E9CCE89C2BC0908F00EEB820 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E9CCE89D2BC0908F00EEB820 /* Build configuration list for PBXNativeTarget "tape_sim" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E9CCE89E2BC0908F00EEB820 /* Debug */,
+				E9CCE89F2BC0908F00EEB820 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E9CCE8862BC0908D00EEB820 /* Project object */;
+}

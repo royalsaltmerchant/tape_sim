@@ -1,0 +1,8 @@
+{
+  "files.associations": {
+    "*.ejs": "html",
+    "portaudio.h": "c",
+    "string.h": "c",
+    "stdbool.h": "c"
+  }
+}
