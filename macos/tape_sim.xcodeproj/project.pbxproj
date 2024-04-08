@@ -8,7 +8,13 @@
 
 /* Begin PBXBuildFile section */
 		E926FF8E2BC0C11B00C6AF96 /* audio.c in Sources */ = {isa = PBXBuildFile; fileRef = E926FF8C2BC0C11B00C6AF96 /* audio.c */; };
-		E9AF10492BC390D100DB0A35 /* libportaudio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E926FF7C2BC0A1E200C6AF96 /* libportaudio.a */; };
+		E9AF104B2BC396E900DB0A35 /* libportaudio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E9AF104A2BC396E900DB0A35 /* libportaudio.a */; };
+		E9AF104D2BC3971800DB0A35 /* include in Resources */ = {isa = PBXBuildFile; fileRef = E9AF104C2BC3971800DB0A35 /* include */; };
+		E9AF104F2BC3976900DB0A35 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E9AF104E2BC3976900DB0A35 /* AudioToolbox.framework */; };
+		E9AF10512BC3977100DB0A35 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E9AF10502BC3977100DB0A35 /* AudioUnit.framework */; };
+		E9AF10532BC3977900DB0A35 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E9AF10522BC3977900DB0A35 /* Carbon.framework */; };
+		E9AF10552BC3978000DB0A35 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E9AF10542BC3978000DB0A35 /* CoreAudio.framework */; };
+		E9AF10572BC3978800DB0A35 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E9AF10562BC3978800DB0A35 /* CoreServices.framework */; };
 		E9CCE8922BC0908D00EEB820 /* tape_simApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CCE8912BC0908D00EEB820 /* tape_simApp.swift */; };
 		E9CCE8942BC0908D00EEB820 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CCE8932BC0908D00EEB820 /* ContentView.swift */; };
 		E9CCE8962BC0908F00EEB820 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9CCE8952BC0908F00EEB820 /* Assets.xcassets */; };
@@ -23,6 +29,13 @@
 		E926FF8C2BC0C11B00C6AF96 /* audio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = audio.c; path = ../../audio.c; sourceTree = "<group>"; };
 		E926FF8D2BC0C11B00C6AF96 /* audio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = audio.h; path = ../../audio.h; sourceTree = "<group>"; };
 		E9AF10472BC389CD00DB0A35 /* libportaudio.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libportaudio.2.dylib; path = ../../../../../../usr/local/Cellar/portaudio/19.7.0/lib/libportaudio.2.dylib; sourceTree = "<group>"; };
+		E9AF104A2BC396E900DB0A35 /* libportaudio.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libportaudio.a; sourceTree = "<group>"; };
+		E9AF104C2BC3971800DB0A35 /* include */ = {isa = PBXFileReference; lastKnownFileType = folder; path = include; sourceTree = "<group>"; };
+		E9AF104E2BC3976900DB0A35 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		E9AF10502BC3977100DB0A35 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
+		E9AF10522BC3977900DB0A35 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
+		E9AF10542BC3978000DB0A35 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
+		E9AF10562BC3978800DB0A35 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = System/Library/Frameworks/CoreServices.framework; sourceTree = SDKROOT; };
 		E9CCE88E2BC0908D00EEB820 /* tape_sim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = tape_sim.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E9CCE8912BC0908D00EEB820 /* tape_simApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = tape_simApp.swift; sourceTree = "<group>"; };
 		E9CCE8932BC0908D00EEB820 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -37,7 +50,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E9AF10492BC390D100DB0A35 /* libportaudio.a in Frameworks */,
+				E9AF10572BC3978800DB0A35 /* CoreServices.framework in Frameworks */,
+				E9AF10552BC3978000DB0A35 /* CoreAudio.framework in Frameworks */,
+				E9AF10532BC3977900DB0A35 /* Carbon.framework in Frameworks */,
+				E9AF10512BC3977100DB0A35 /* AudioUnit.framework in Frameworks */,
+				E9AF104F2BC3976900DB0A35 /* AudioToolbox.framework in Frameworks */,
+				E9AF104B2BC396E900DB0A35 /* libportaudio.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -47,6 +65,11 @@
 		E926FF7B2BC0A1E200C6AF96 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				E9AF10562BC3978800DB0A35 /* CoreServices.framework */,
+				E9AF10542BC3978000DB0A35 /* CoreAudio.framework */,
+				E9AF10522BC3977900DB0A35 /* Carbon.framework */,
+				E9AF10502BC3977100DB0A35 /* AudioUnit.framework */,
+				E9AF104E2BC3976900DB0A35 /* AudioToolbox.framework */,
 				E9AF10472BC389CD00DB0A35 /* libportaudio.2.dylib */,
 				E926FF872BC0A98D00C6AF96 /* portaudio.h */,
 				E926FF7E2BC0A3BC00C6AF96 /* libportaudio.dylib */,
@@ -75,6 +98,8 @@
 		E9CCE8902BC0908D00EEB820 /* tape_sim */ = {
 			isa = PBXGroup;
 			children = (
+				E9AF104C2BC3971800DB0A35 /* include */,
+				E9AF104A2BC396E900DB0A35 /* libportaudio.a */,
 				E9078C982BC0F1B2009BEFFD /* tape-sim-Info.plist */,
 				E926FF8C2BC0C11B00C6AF96 /* audio.c */,
 				E926FF8D2BC0C11B00C6AF96 /* audio.h */,
@@ -155,6 +180,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E9AF104D2BC3971800DB0A35 /* include in Resources */,
 				E9CCE8992BC0908F00EEB820 /* Preview Assets.xcassets in Resources */,
 				E9CCE8962BC0908F00EEB820 /* Assets.xcassets in Resources */,
 			);
@@ -312,7 +338,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				"HEADER_SEARCH_PATHS[arch=*]" = /usr/local/opt/portaudio/lib;
+				HEADER_SEARCH_PATHS = /Users/Julianranieri/Desktop/Code_Base/daw/macos/tape_sim/include;
 				INFOPLIST_FILE = "tape-sim-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Tape Sim";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
@@ -323,8 +349,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/usr/local/opt/portaudio/lib,
-					/usr/local/Cellar/portaudio/19.7.0/lib,
+					"$(PROJECT_DIR)/tape_sim",
 				);
 				MACH_O_TYPE = mh_execute;
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
@@ -356,7 +381,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				"HEADER_SEARCH_PATHS[arch=*]" = /usr/local/opt/portaudio/lib;
+				HEADER_SEARCH_PATHS = /Users/Julianranieri/Desktop/Code_Base/daw/macos/tape_sim/include;
 				INFOPLIST_FILE = "tape-sim-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Tape Sim";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
@@ -367,8 +392,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/usr/local/opt/portaudio/lib,
-					/usr/local/Cellar/portaudio/19.7.0/lib,
+					"$(PROJECT_DIR)/tape_sim",
 				);
 				MACH_O_TYPE = mh_execute;
 				MACOSX_DEPLOYMENT_TARGET = 11.0;

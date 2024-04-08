@@ -10,7 +10,7 @@
 #include <time.h>
 #include <math.h>
 #include <stdbool.h>
-#include "portaudio.h"
+#include <portaudio.h>
 
 // SETUP
 float startTimeInSeconds = 0;
