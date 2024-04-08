@@ -15,7 +15,7 @@ struct ContentView: View {
     @State private var startTimeInSeconds: Float = 0.0
     private var timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
 	// High-frequency timer for rewind and fast forward
-    private var highFrequencyTimer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
+    private var rewFasTimer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
     
     var body: some View {
         VStack {
@@ -30,6 +30,11 @@ struct ContentView: View {
                 }
             
             HStack {
+				Button(action: rtz) {
+                    Label("RTZ", systemImage: "return")
+                }
+                .buttonStyle(ActionButtonStyle(backgroundColor: .gray))
+                
                 Button(action: rewind) {
                     Label("REW", systemImage: "gobackward")
                 }
@@ -53,7 +58,7 @@ struct ContentView: View {
             .padding(.horizontal)
         }
         .padding()
-		.onReceive(highFrequencyTimer) { _ in
+		.onReceive(rewFasTimer) { _ in
 			if isRewinding {
 				rewind()
 			}
@@ -127,10 +132,18 @@ struct ContentView: View {
     func stopFastForward() {
 		isFastForwarding = false;
 	}
+	
+	func rtz() {
+		if (isPlaying) {stop()}
+		if (isFastForwarding) {stopFastForward()}
+		if (isRewinding) {stopRewind()}
+		onRtz()
+	}
     
     func getUpdatedStartTime() -> Float {
         return getCurrentStartTimeInSeconds()
     }
+    
 }
 
 struct ActionButtonStyle: ButtonStyle {

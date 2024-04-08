@@ -617,6 +617,10 @@ void onStopPlaying()
   printf("Playing stopped.\n");
 }
 
+void onRtz() {
+  updateStartTime(0.00);
+}
+
 // int main() {
 //   initAudio();
 

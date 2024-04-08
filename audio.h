@@ -54,7 +54,7 @@ void onStartPlaying();
 void onStopPlaying();
 void onRewind();
 void onFastForward();
-void updateStartTime(float time);
+void onRtz();
 float getCurrentStartTimeInSeconds();
 
 #endif
