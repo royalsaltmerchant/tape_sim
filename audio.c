@@ -4,6 +4,32 @@
 // END SETUP
 
 // UTILITY FUNCTIONS
+// Function to build a directory path for your app within the user's home directory
+char *buildAppDirectoryPath()
+{
+  const char *homeDir = getenv("HOME");
+  if (!homeDir)
+  {
+    // Fallback if HOME isn't set
+    homeDir = ".";
+  }
+
+  const char *appSubDir = "/Documents/tape_sim";
+
+  // Allocate memory for the full path
+  char *appDirPath = malloc(strlen(homeDir) + strlen(appSubDir) + 1);
+  if (appDirPath)
+  {
+    strcpy(appDirPath, homeDir);
+    strcat(appDirPath, appSubDir);
+  }
+
+  // Optionally, create the directory if it doesn't exist
+  mkdir(appDirPath, 0777);
+
+  return appDirPath; // Remember to free this memory after use!
+}
+
 void checkDeviceCountAndGetAudioDeviceInfo()
 {
   int numDevices = Pa_GetDeviceCount();
@@ -133,13 +159,27 @@ void inputStartTime()
 
 WavFile *openWavFile(const char *filename)
 {
-  // allocate the memory
+  char *directoryPath = buildAppDirectoryPath(); // Build or get the directory path
+  if (!directoryPath)
+  {
+    exit(1);
+  }
+
+  char *filePath = malloc(strlen(directoryPath) + strlen(filename) + 2); // +2 for '/' and null terminator
+  if (!filePath)
+  {
+    free(directoryPath);
+    exit(1);
+  }
+
+  sprintf(filePath, "%s/%s", directoryPath, filename);
+
   WavFile *wav = malloc(sizeof(WavFile));
   if (!wav)
-    return NULL;
+    exit(1);
 
   // Check if the file already exists
-  bool fileExists = access(filename, F_OK) != -1;
+  bool fileExists = access(filePath, F_OK) != -1;
 
   size_t headerSize = 44;
   int subchunk1Size = 16; // For PCM
@@ -149,11 +189,11 @@ WavFile *openWavFile(const char *filename)
   short blockAlign = numChannels * (bitDepth / 8);
 
   // Open or create the file
-  wav->file = fopen(filename, fileExists ? "r+b" : "wb");
+  wav->file = fopen(filePath, fileExists ? "r+b" : "wb");
   if (!wav->file)
   {
     free(wav);
-    return NULL;
+    exit(1);
   }
 
   if (!fileExists)
@@ -617,20 +657,19 @@ void onStopPlaying()
   printf("Playing stopped.\n");
 }
 
-void onRtz() {
+void onRtz()
+{
   updateStartTime(0.00);
 }
 
 // int main() {
 //   initAudio();
-
-//   updateStartTime(2.00);
-//   onStartPlaying();
-//   sleep(1);
-//   onStopPlaying();
 //   onStartRecording();
 //   sleep(3);
 //   onStopRecording();
+//   onStartPlaying();
+//   sleep(3);
+//   onStopPlaying();
 
 //   cleanupAudio();
 // }

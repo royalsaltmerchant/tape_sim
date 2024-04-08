@@ -4,13 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/select.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <termios.h>
 #include <string.h>
 #include <time.h>
 #include <math.h>
 #include <stdbool.h>
-#include <portaudio.h>
+#include "../portaudio/include/portaudio.h"
 
 // SETUP
 float startTimeInSeconds = 0;
