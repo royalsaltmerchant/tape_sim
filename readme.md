@@ -1,9 +1,11 @@
 # TapeSim DAW
 Tape Sim intends to simulate a simple tape machine experience by recording and playing audio with a simple UI.
 
-The program records as many mono audio wav files as there are inputs in your default audio device and allows you to rewind, fast-forward and re-record over a section of time.
+The program records as many tracks as there are inputs in your default audio device and allows you to rewind, fast-forward and re-record over a section of time.
 
-Playback is currerntly mixed down to stereo. 
+Playback is currently mixed down to stereo. 
+
+Recordings are a made into mono wav files at 48khz 24bit quality
 
 Current UI available for this program is for MacOS made with SwiftUI.
 
