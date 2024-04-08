@@ -7,7 +7,7 @@ Playback is currently mixed down to stereo.
 
 Recordings are a made into mono wav files at 48khz 24bit quality
 
-Current UI available for this program is for MacOS made with SwiftUI.
+Current UI available for this program is for MacOS(Intel x86_64) made with SwiftUI.
 
 ![Image of current UI in MacOS](./macosscreenshot.png)
 
