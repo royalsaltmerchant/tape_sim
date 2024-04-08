@@ -7,6 +7,8 @@ Playback is currerntly mixed down to stereo.
 
 Current UI available for this program is for MacOS made with SwiftUI.
 
+![Image of current UI in MacOS](./macosscreenshot.png)
+
 ## Resources
 
 wav spec https://docs.fileformat.com/audio/wav/
