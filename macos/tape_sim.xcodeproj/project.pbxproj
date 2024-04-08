@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E926FF8B2BC0BD5200C6AF96 /* libportaudio.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E926FF7E2BC0A3BC00C6AF96 /* libportaudio.dylib */; };
 		E926FF8E2BC0C11B00C6AF96 /* audio.c in Sources */ = {isa = PBXBuildFile; fileRef = E926FF8C2BC0C11B00C6AF96 /* audio.c */; };
+		E9AF10462BC389C900DB0A35 /* libportaudio.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E926FF7E2BC0A3BC00C6AF96 /* libportaudio.dylib */; };
 		E9CCE8922BC0908D00EEB820 /* tape_simApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CCE8912BC0908D00EEB820 /* tape_simApp.swift */; };
 		E9CCE8942BC0908D00EEB820 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CCE8932BC0908D00EEB820 /* ContentView.swift */; };
 		E9CCE8962BC0908F00EEB820 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9CCE8952BC0908F00EEB820 /* Assets.xcassets */; };
@@ -22,6 +22,7 @@
 		E926FF872BC0A98D00C6AF96 /* portaudio.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = portaudio.h; path = ../../../../../../usr/local/Cellar/portaudio/19.7.0/include/portaudio.h; sourceTree = "<group>"; };
 		E926FF8C2BC0C11B00C6AF96 /* audio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = audio.c; path = ../../audio.c; sourceTree = "<group>"; };
 		E926FF8D2BC0C11B00C6AF96 /* audio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = audio.h; path = ../../audio.h; sourceTree = "<group>"; };
+		E9AF10472BC389CD00DB0A35 /* libportaudio.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libportaudio.2.dylib; path = ../../../../../../usr/local/Cellar/portaudio/19.7.0/lib/libportaudio.2.dylib; sourceTree = "<group>"; };
 		E9CCE88E2BC0908D00EEB820 /* tape_sim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = tape_sim.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E9CCE8912BC0908D00EEB820 /* tape_simApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = tape_simApp.swift; sourceTree = "<group>"; };
 		E9CCE8932BC0908D00EEB820 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -36,7 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E926FF8B2BC0BD5200C6AF96 /* libportaudio.dylib in Frameworks */,
+				E9AF10462BC389C900DB0A35 /* libportaudio.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -46,6 +47,7 @@
 		E926FF7B2BC0A1E200C6AF96 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				E9AF10472BC389CD00DB0A35 /* libportaudio.2.dylib */,
 				E926FF872BC0A98D00C6AF96 /* portaudio.h */,
 				E926FF7E2BC0A3BC00C6AF96 /* libportaudio.dylib */,
 				E926FF7C2BC0A1E200C6AF96 /* libportaudio.a */,
@@ -296,6 +298,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = x86_64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
@@ -311,6 +314,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				"HEADER_SEARCH_PATHS[arch=*]" = /usr/local/opt/portaudio/lib;
 				INFOPLIST_FILE = "tape-sim-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Tape Sim";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -322,6 +327,7 @@
 					/usr/local/Cellar/portaudio/19.7.0/lib,
 				);
 				MACH_O_TYPE = mh_execute;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.salt.tape-sim";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -336,6 +342,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = x86_64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
@@ -351,6 +358,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				"HEADER_SEARCH_PATHS[arch=*]" = /usr/local/opt/portaudio/lib;
 				INFOPLIST_FILE = "tape-sim-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Tape Sim";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -362,6 +371,7 @@
 					/usr/local/Cellar/portaudio/19.7.0/lib,
 				);
 				MACH_O_TYPE = mh_execute;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.salt.tape-sim";
 				PRODUCT_NAME = "$(TARGET_NAME)";
