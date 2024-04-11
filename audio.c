@@ -354,6 +354,7 @@ static int playbackCallback(const void *inputBuffer, void *outputBuffer, unsigne
                             const PaStreamCallbackTimeInfo *timeInfo, PaStreamCallbackFlags statusFlags, void *userData)
 {
   unsigned char **out = (unsigned char **)outputBuffer;
+  size_t minReadFrames = framesPerBuffer; // Initialize with the maximum possible, will find the minimum
 
   for (int channel = 0; channel < player.trackCount; ++channel)
   {
@@ -376,9 +377,15 @@ static int playbackCallback(const void *inputBuffer, void *outputBuffer, unsigne
         memset(&out[channel][frame * 3], 0, 3);
       }
     }
-    // Update the playback position
-    player.playbackPosition += readFrames;
+    // Determine the minimum readFrames across all channels
+    if (readFrames < minReadFrames)
+    {
+      minReadFrames = readFrames;
+    }
   }
+
+  // Update the playback position after processing all channels
+  player.playbackPosition += minReadFrames;
 
   // Update the global time based on frames processed
   startTimeInSeconds += (float)framesPerBuffer / (float)sampleRate;
