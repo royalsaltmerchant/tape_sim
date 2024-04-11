@@ -3,9 +3,9 @@ Tape Sim intends to simulate a simple tape machine experience by recording and p
 
 The program records as many tracks as there are inputs in your default audio device and allows you to rewind, fast-forward and re-record over a section of time.
 
-Playback is currently mixed down to stereo. 
+Playback is mapped 1-1 input to output. So if there are 4 inputs, 4 wav files are created and playedback on outputs 1-4. If there are not as many outputs as inputs then the program will crash.
 
-Recordings are a made into mono wav files at 48khz 24bit quality
+Recordings and playback are in mono at 48khz 24bit quality.
 
 Current UI available for this program is for MacOS(Intel x86_64) made with SwiftUI.
 
