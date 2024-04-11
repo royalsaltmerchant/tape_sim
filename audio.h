@@ -37,8 +37,6 @@ typedef struct
 {
   WavFile *tracks;
   size_t trackCount;
-  float *leftChannelBuffer;  // Buffer for left channel audio data
-  float *rightChannelBuffer; // Buffer for right channel audio data
   size_t bufferLength;       // Length of the buffer
   int playbackPosition;      // Current playback position in the buffer
 } Player;
