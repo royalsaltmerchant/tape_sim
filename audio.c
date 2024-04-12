@@ -131,6 +131,23 @@ float getCurrentStartTimeInSeconds()
   return startTimeInSeconds;
 }
 
+unsigned int getInputTrackCount()
+{
+  return (unsigned int)recorder.trackCount;
+}
+
+float getCurrentAmplitude(unsigned int index, bool isRecording)
+{
+  if (isRecording)
+  {
+    return recorder.tracks[index].currentAmplitudeLevel;
+  }
+  else
+  {
+    return player.tracks[index].currentAmplitudeLevel;
+  }
+}
+
 void inputStartTime()
 {
   float time;
@@ -319,10 +336,12 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
     // calculate db levels
     float rms = calculateRMS(buffers[channel], framesPerBuffer);
     float dbLevel = rmsToDb(rms);
-    // Rate-limiting the print operation
+
+    // Rate-limiting the operation
     if (canDoAgain(1))
     { // 10 milliseconds
       printf("Channel %d: dB Level = %f\n", channel, dbLevel);
+      recorder->tracks[channel].currentAmplitudeLevel = dbLevel;
     }
 
     // RECORDING
@@ -353,11 +372,22 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
 static int playbackCallback(const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer,
                             const PaStreamCallbackTimeInfo *timeInfo, PaStreamCallbackFlags statusFlags, void *userData)
 {
-  unsigned char **out = (unsigned char **)outputBuffer;
+  unsigned char **outputBuffers = (unsigned char **)outputBuffer;
   size_t minReadFrames = framesPerBuffer; // Initialize with the maximum possible, will find the minimum
 
   for (int channel = 0; channel < player.trackCount; ++channel)
   {
+    // calculate db levels
+    float rms = calculateRMS(outputBuffers[channel], framesPerBuffer);
+    float dbLevel = rmsToDb(rms);
+
+    // Rate-limiting the operation
+    if (canDoAgain(1))
+    { // 10 milliseconds
+      printf("Channel %d: dB Level = %f\n", channel, dbLevel);
+      player.tracks[channel].currentAmplitudeLevel = dbLevel;
+    }
+
     size_t readFrames = 0;
     for (size_t frame = 0; frame < framesPerBuffer; ++frame)
     {
@@ -367,14 +397,14 @@ static int playbackCallback(const void *inputBuffer, void *outputBuffer, unsigne
         if (fread(sampleBytes, sizeof(uint8_t), 3, player.tracks[channel].file) == 3)
         {
           // We read 3 bytes successfully
-          memcpy(&out[channel][frame * 3], sampleBytes, 3);
+          memcpy(&outputBuffers[channel][frame * 3], sampleBytes, 3);
           readFrames++;
         }
       }
       else
       {
         // If no more data, fill with zeros
-        memset(&out[channel][frame * 3], 0, 3);
+        memset(&outputBuffers[channel][frame * 3], 0, 3);
       }
     }
     // Determine the minimum readFrames across all channels

@@ -25,6 +25,7 @@ typedef struct
 {
   FILE *file;
   size_t dataSize;
+  float currentAmplitudeLevel;
 } WavFile;
 
 typedef struct
@@ -37,7 +38,6 @@ typedef struct
 {
   WavFile *tracks;
   size_t trackCount;
-  size_t bufferLength;       // Length of the buffer
   int playbackPosition;      // Current playback position in the buffer
 } Player;
 
@@ -55,5 +55,7 @@ void onRewind();
 void onFastForward();
 void onRtz();
 float getCurrentStartTimeInSeconds();
+unsigned int getInputTrackCount();
+float getCurrentAmplitude(unsigned int index, bool isRecording);
 
 #endif

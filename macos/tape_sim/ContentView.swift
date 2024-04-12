@@ -10,12 +10,25 @@ import SwiftUI
 struct ContentView: View {
     @State private var isRecordingEnabled = false
     @State private var isPlaying = false
-    @State private var isRewinding = false;
-    @State private var isFastForwarding = false;
+    @State private var isRewinding = false
+    @State private var isFastForwarding = false
     @State private var startTimeInSeconds: Float = 0.0
+    @State private var inputTrackRecordEnabledStates: [Bool]
+	@State private var amplitudes: [CGFloat]
+    // timer for updating start timer
     private var timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
-	// High-frequency timer for rewind and fast forward
+	// timer for rewind and fast forward
     private var rewFasTimer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
+    // timer for updating amplitude levels
+	private var ampTimer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
+    
+    init() {
+		// init all input track record enabled states
+		_inputTrackRecordEnabledStates = State(initialValue: Array(repeating: true, count: Int(getInputTrackCount())))
+		// init amplitudes
+		_amplitudes = State(initialValue: Array(repeating: 0.0, count: Int(getInputTrackCount())))
+
+	}
     
     var body: some View {
         VStack {
@@ -56,6 +69,29 @@ struct ContentView: View {
                 .buttonStyle(ActionButtonStyle(backgroundColor: .blue))
             }
             .padding(.horizontal)
+            
+            HStack {
+				HStack {
+					ForEach(0..<amplitudes.count, id: \.self) { index in
+						VStack {
+							AmpMeter(amplitude: amplitudes[index])
+								.frame(height: 100)
+								.onReceive(ampTimer) { _ in
+									let recordingOrPlaying = inputTrackRecordEnabledStates[index] && isRecordingEnabled ? true : false
+									let rawAmplitude: Float = getCurrentAmplitude(UInt32(index), recordingOrPlaying)
+									print("raw amplitude", rawAmplitude)
+									let normalizedAmplitude = normalizeAmplitudeLevel(dBLevel: rawAmplitude)
+									amplitudes[index] = normalizedAmplitude
+								}
+
+							Toggle(isOn: $inputTrackRecordEnabledStates[index]) {
+								Text("Track \(index + 1)")
+							}
+						}
+						.padding()
+					}
+				}
+			}
         }
         .padding()
 		.onReceive(rewFasTimer) { _ in
@@ -143,6 +179,13 @@ struct ContentView: View {
     func getUpdatedStartTime() -> Float {
         return getCurrentStartTimeInSeconds()
     }
+    
+    func normalizeAmplitudeLevel(dBLevel: Float, minDB: Float = -120.0, maxDB: Float = 0.0) -> CGFloat {
+		let clampedLevel = max(minDB, min(maxDB, dBLevel))
+		let normalized = (clampedLevel - minDB / (maxDB - minDB))
+		print("normalized amp", normalized)
+		return CGFloat(normalized)
+	}
     
 }
 
