@@ -442,15 +442,6 @@ void initPlayerStream()
   size_t startPosition = (size_t)(sampleRate * startTimeInSeconds);
   player.playbackPosition = startPosition;
 
-  // Note: Ensure that this does not exceed the bufferLength.
-  // If startPosition is greater than bufferLength, you might want to handle it as an error or reset to a valid position.
-  if (player.playbackPosition >= player.bufferLength)
-  {
-    printf("Start time exceeds the length of the audio buffer. Resetting to start.\n");
-    player.playbackPosition = 0;
-    startTimeInSeconds = 0;
-  }
-
   // Setup output parameters
   PaStreamParameters outputParameters;
   outputParameters.device = Pa_GetDefaultOutputDevice();
