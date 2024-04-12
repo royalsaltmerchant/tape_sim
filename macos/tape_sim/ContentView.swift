@@ -77,6 +77,10 @@ struct ContentView: View {
 							AmpMeter(amplitude: amplitudes[index])
 								.frame(height: 100)
 								.onReceive(ampTimer) { _ in
+									if (!isPlaying) {
+										amplitudes[index] = -120.0
+										return
+									}
 									let recordingOrPlaying = inputTrackRecordEnabledStates[index] && isRecordingEnabled ? true : false
 									let rawAmplitude: Float = getCurrentAmplitude(UInt32(index), recordingOrPlaying)
 									print("raw amplitude", rawAmplitude)
