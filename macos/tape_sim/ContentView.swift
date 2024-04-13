@@ -84,9 +84,9 @@ struct ContentView: View {
 									}
 									let recordingOrPlaying = inputTrackRecordEnabledStates[index] && isRecordingEnabled ? true : false
 									let rawAmplitude: Float = getCurrentAmplitude(UInt32(index), recordingOrPlaying)
-									print("raw amplitude", rawAmplitude)
+									print("Channel: ", amplitudes[index], " Raw from c to swift: ", rawAmplitude)
 									let normalizedAmplitude = decibelToHeight(decibel: rawAmplitude)
-									print("normalized amplitude", normalizedAmplitude)
+									print("Channel: ", amplitudes[index], " Normalized amplitude: ", normalizedAmplitude)
 									amplitudes[index] = CGFloat(normalizedAmplitude)
 								}
 

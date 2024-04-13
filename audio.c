@@ -45,21 +45,6 @@ void checkDeviceCountAndGetAudioDeviceInfo()
   }
 }
 
-// Checks if at least `interval` milliseconds have passed since last true return
-bool canDoAgain(int interval)
-{
-  static clock_t lastDoneTime = 0;
-  clock_t currentTime = clock();
-  clock_t elapsed = ((currentTime - lastDoneTime) * 1000) / CLOCKS_PER_SEC;
-
-  if (elapsed >= interval)
-  {
-    lastDoneTime = currentTime;
-    return true;
-  }
-  return false;
-}
-
 // Function to check if a key was pressed
 bool keyPressed()
 {
@@ -336,13 +321,8 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
     // calculate db levels
     float rms = calculateRMS(buffers[channel], framesPerBuffer);
     float dbLevel = rmsToDb(rms);
-
-    // Rate-limiting the operation
-    if (canDoAgain(1))
-    { // 10 milliseconds
-      printf("Channel %d: dB Level = %f\n", channel, dbLevel);
-      recorder->tracks[channel].currentAmplitudeLevel = dbLevel;
-    }
+    printf("Channel %d: dB Level = %f\n", channel, dbLevel);
+    recorder->tracks[channel].currentAmplitudeLevel = dbLevel;
 
     // RECORDING
     // channel data and write buffer for wav
@@ -380,13 +360,8 @@ static int playbackCallback(const void *inputBuffer, void *outputBuffer, unsigne
     // calculate db levels
     float rms = calculateRMS(outputBuffers[channel], framesPerBuffer);
     float dbLevel = rmsToDb(rms);
-
-    // Rate-limiting the operation
-    if (canDoAgain(1))
-    { // 10 milliseconds
-      printf("Channel %d: dB Level = %f\n", channel, dbLevel);
-      player.tracks[channel].currentAmplitudeLevel = dbLevel;
-    }
+    printf("Channel %d: dB Level = %f\n", channel, dbLevel);
+    player.tracks[channel].currentAmplitudeLevel = dbLevel;
 
     size_t readFrames = 0;
     for (size_t frame = 0; frame < framesPerBuffer; ++frame)
