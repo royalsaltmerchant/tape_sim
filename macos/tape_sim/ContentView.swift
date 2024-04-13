@@ -186,9 +186,10 @@ struct ContentView: View {
     }
     
 	func decibelToHeight(decibel: Float) -> Float {
-		let normalizedValue = (decibel + 120) / 120
-		let uiHeight = 10 + (normalizedValue * (300 - 10))
-		return uiHeight
+		let normalizedValue: Float = (decibel + 120) / 120
+		let uiHeight = 10 + (normalizedValue * (300 - 10)) // UI range 10px - 300px
+		
+		return uiHeight - 50 // reduce by 40-60 to compensate
 	}
 
     
