@@ -16,7 +16,7 @@ struct ContentView: View {
     @State private var inputTrackRecordEnabledStates: [Bool]
 	@State private var amplitudes: [CGFloat]
     // timer for updating start timer
-    private var timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
+    private var startTimeTimer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
 	// timer for rewind and fast forward
     private var rewFasTimer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
     // timer for updating amplitude levels
@@ -38,7 +38,7 @@ struct ContentView: View {
             .padding()
             
             Text("\(startTimeInSeconds, specifier: "%.2f") seconds")
-                .onReceive(timer) { _ in
+                .onReceive(startTimeTimer) { _ in
                     startTimeInSeconds = getUpdatedStartTime() // Fetches the current start time
                 }
             
@@ -82,8 +82,7 @@ struct ContentView: View {
 										amplitudes[index] = 0
 										return
 									}
-									let recordingOrPlaying = inputTrackRecordEnabledStates[index] && isRecordingEnabled ? true : false
-									let rawAmplitude: Float = getCurrentAmplitude(UInt32(index), recordingOrPlaying)
+									let rawAmplitude: Float = getCurrentAmplitude(UInt32(index))
 									print("Channel: ", amplitudes[index], " Raw from c to swift: ", rawAmplitude)
 									let normalizedAmplitude = decibelToHeight(decibel: rawAmplitude)
 									print("Channel: ", amplitudes[index], " Normalized amplitude: ", normalizedAmplitude)
@@ -117,23 +116,14 @@ struct ContentView: View {
 		stopFastForward()
 		}
 		
-        if isRecordingEnabled {
-            if !isPlaying {
-                onStartRecording()
-                isPlaying = true
-            } else {
-                onStopRecording()
-                isPlaying = false
-            }
-        } else {
-            if !isPlaying {
-                onStartPlaying()
-                isPlaying = true
-            } else {
-                onStopPlaying()
-                isPlaying = false
-            }
-        }
+		if !isPlaying {
+			onStart()
+			isPlaying = true
+		} else {
+			onStop()
+			isPlaying = false
+		}
+        
     }
     
     func stop() {
@@ -144,11 +134,9 @@ struct ContentView: View {
 			stopFastForward()
 		}
 		
-        if isPlaying && isRecordingEnabled {
-            onStopRecording()
-        } else if isPlaying {
-            onStopPlaying()
-        }
+        if isPlaying {
+			onStop()
+		}
         isPlaying = false
     }
     
