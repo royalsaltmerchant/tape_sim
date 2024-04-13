@@ -84,8 +84,8 @@ struct ContentView: View {
 									let recordingOrPlaying = inputTrackRecordEnabledStates[index] && isRecordingEnabled ? true : false
 									let rawAmplitude: Float = getCurrentAmplitude(UInt32(index), recordingOrPlaying)
 									print("raw amplitude", rawAmplitude)
-									let normalizedAmplitude = normalizeAmplitudeLevel(dBLevel: rawAmplitude)
-									amplitudes[index] = normalizedAmplitude
+									let normalizedAmplitude = decibelToHeight(decibel: rawAmplitude)
+									amplitudes[index] = CGFloat(normalizedAmplitude)
 								}
 
 							Toggle(isOn: $inputTrackRecordEnabledStates[index]) {
@@ -184,12 +184,12 @@ struct ContentView: View {
         return getCurrentStartTimeInSeconds()
     }
     
-    func normalizeAmplitudeLevel(dBLevel: Float, minDB: Float = -120.0, maxDB: Float = 0.0) -> CGFloat {
-		let clampedLevel = max(minDB, min(maxDB, dBLevel))
-		let normalized = (clampedLevel - minDB / (maxDB - minDB))
-		print("normalized amp", normalized)
-		return CGFloat(normalized)
+	func decibelToHeight(decibel: Float) -> Float {
+		let normalizedValue = (decibel + 120) / 120
+		let uiHeight = 10 + (normalizedValue * (300 - 10))
+		return uiHeight
 	}
+
     
 }
 
