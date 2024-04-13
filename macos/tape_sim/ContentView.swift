@@ -117,8 +117,17 @@ struct ContentView: View {
 		}
 		
 		if !isPlaying {
-			onStart()
-			isPlaying = true
+			// Map Swift Bool to C 'bool' (UInt8)
+			let recordEnabledStates = inputTrackRecordEnabledStates.map { $0 ? 1 : 0 }.map(UInt32.init)
+			recordEnabledStates.forEach { item in
+				print(item)
+			}
+			recordEnabledStates.withUnsafeBufferPointer { bufferPointer in
+				if let baseAddress = bufferPointer.baseAddress {
+					onStart(baseAddress, isRecordingEnabled)
+					isPlaying = true
+				}
+			}
 		} else {
 			onStop()
 			isPlaying = false

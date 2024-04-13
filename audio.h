@@ -19,6 +19,7 @@ int sampleRate = 48000;
 int bitDepth = 24;
 PaStream *stream;
 int frames = 256;
+bool isRecording;
 
 typedef struct
 {
@@ -41,7 +42,7 @@ Recorder recorder;
 void initAudio();
 void cleanupAudio();
 void onStop();
-void onStart();
+void onStart(const unsigned int *inputTrackRecordEnabledStates, bool isRecordingFromUI);
 void onRewind();
 void onFastForward();
 void onRtz();

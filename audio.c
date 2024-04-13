@@ -231,7 +231,7 @@ WavFile *openWavFile(const char *filename)
   }
 }
 
-void initTracks()
+void initTracks(unsigned int *inputTrackRecordEnabledStates)
 {
   for (size_t i = 0; i < recorder.trackCount; i++)
   {
@@ -241,8 +241,17 @@ void initTracks()
     recorder.tracks[i] = *wav;
     free(wav);
 
+    printf("track state: %u\n", inputTrackRecordEnabledStates[i]);
+
     // logic for record enabled setting
-    recorder.tracks[i].recordEnabled = false;
+    if (inputTrackRecordEnabledStates[i])
+    {
+      recorder.tracks[i].recordEnabled = true;
+    }
+    else
+    {
+      recorder.tracks[i].recordEnabled = false;
+    }
   }
 }
 
@@ -297,6 +306,7 @@ static int streamCallback(const void *inputBuffer, void *outputBuffer,
   unsigned char **outputBuffers = (unsigned char **)outputBuffer;
   Recorder *recorder = (Recorder *)userData;
   size_t minReadFrames = framesPerBuffer; // Initialize with the maximum possible
+  unsigned char *writeBuffer = malloc(framesPerBuffer * 3); // Allocate buffer
 
   for (int channel = 0; channel < recorder->trackCount; ++channel)
   {
@@ -306,56 +316,56 @@ static int streamCallback(const void *inputBuffer, void *outputBuffer,
     printf("Recording - Channel %d: dB Level = %f\n", channel, dbLevel);
     recorder->tracks[channel].currentAmplitudeLevel = dbLevel;
 
-    // Handle Recording if the track is enabled for it
-    if (recorder->tracks[channel].recordEnabled)
+    if (isRecording)
     {
-
-      const unsigned char *channelData = inputBuffers[channel];
-      unsigned char *writeBuffer = malloc(framesPerBuffer * 3); // Allocate buffer for the current channel
-
-      // Accumulate the samples for the current channel into writeBuffer
-      for (unsigned long frame = 0; frame < framesPerBuffer; ++frame)
+      if (recorder->tracks[channel].recordEnabled)
       {
-        memcpy(&writeBuffer[frame * 3], &channelData[frame * 3], 3);
+        // channel data and write buffer for wav
+        const unsigned char *channelData = inputBuffers[channel];
+        // Accumulate the samples for the current channel into writeBuffer
+        for (unsigned long frame = 0; frame < framesPerBuffer; ++frame)
+        {
+          int byteIndex = frame * 3;
+          memcpy(&writeBuffer[frame * 3], &channelData[byteIndex], 3);
+        }
+        // Now, writeBuffer contains all the frames for the current channel, so write it all at once
+        writeWavData(&recorder->tracks[channel], writeBuffer, framesPerBuffer * 3);
       }
-
-      // Write buffer to file
-      writeWavData(&recorder->tracks[channel], writeBuffer, framesPerBuffer * 3);
-      free(writeBuffer);
     }
 
     // Handle Playback
-    size_t readFrames = 0;
-    for (size_t frame = 0; frame < framesPerBuffer; ++frame)
-    {
-      if (recorder->playbackPosition + frame < recorder->tracks[channel].dataSize / 3)
-      {
-        uint8_t sampleBytes[3];
-        if (fread(sampleBytes, sizeof(uint8_t), 3, recorder->tracks[channel].file) == 3)
-        {
-          // We read 3 bytes successfully
-          memcpy(&outputBuffers[channel][frame * 3], sampleBytes, 3);
-          readFrames++;
-        }
-      }
-      else
-      {
-        // If no more data, fill with zeros
-        memset(&outputBuffers[channel][frame * 3], 0, 3);
-      }
-    }
-    // Determine the minimum readFrames across all channels for playback tracking
-    if (readFrames < minReadFrames)
-    {
-      minReadFrames = readFrames;
-    }
+  //   size_t readFrames = 0;
+  //   for (size_t frame = 0; frame < framesPerBuffer; ++frame)
+  //   {
+  //     if (recorder->playbackPosition + frame < recorder->tracks[channel].dataSize / 3)
+  //     {
+  //       uint8_t sampleBytes[3];
+  //       if (fread(sampleBytes, sizeof(uint8_t), 3, recorder->tracks[channel].file) == 3)
+  //       {
+  //         // We read 3 bytes successfully
+  //         memcpy(&outputBuffers[channel][frame * 3], sampleBytes, 3);
+  //         readFrames++;
+  //       }
+  //     }
+  //     else
+  //     {
+  //       // If no more data, fill with zeros
+  //       memset(&outputBuffers[channel][frame * 3], 0, 3);
+  //     }
+  //   }
+  //   // Determine the minimum readFrames across all channels for playback tracking
+  //   if (readFrames < minReadFrames)
+  //   {
+  //     minReadFrames = readFrames;
+  //   }
   }
 
-  // Update the playback position after processing all channels
-  recorder->playbackPosition += minReadFrames;
+  // free the write buffer
+  free(writeBuffer);
 
-  // Update the global time based on frames processed
-  startTimeInSeconds += (float)framesPerBuffer / (float)sampleRate;
+  // Update the start time to reflect the current playback position
+  float timeIncrement = (float)framesPerBuffer / sampleRate;
+  startTimeInSeconds += timeIncrement;
 
   return paContinue;
 }
@@ -536,11 +546,14 @@ void onStop()
   printf("Recording stopped.\n");
 }
 
-void onStart()
+void onStart(const unsigned int *inputTrackRecordEnabledStates, bool isRecordingFromUI)
 {
+  // handle setting is recording first
+  isRecording = isRecordingFromUI;
+
   PaError err;
   // init or re-init all wav track files with header data
-  initTracks();
+  initTracks(&inputTrackRecordEnabledStates);
   // init stream
   initStream();
   // Start recording
