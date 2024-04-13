@@ -85,6 +85,7 @@ struct ContentView: View {
 									let rawAmplitude: Float = getCurrentAmplitude(UInt32(index), recordingOrPlaying)
 									print("raw amplitude", rawAmplitude)
 									let normalizedAmplitude = decibelToHeight(decibel: rawAmplitude)
+									print("normalized amplitude", normalizedAmplitude)
 									amplitudes[index] = CGFloat(normalizedAmplitude)
 								}
 

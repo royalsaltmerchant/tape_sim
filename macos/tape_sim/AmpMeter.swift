@@ -15,7 +15,7 @@ struct AmpMeter: View {
             VStack {
                 Spacer()  // Pushes the rectangle to the bottom of the available space.
                 Rectangle()
-                    .frame(width: 20, height: min(amplitude - 60, geometry.size.height))
+                    .frame(width: 20, height: max(0, min(amplitude - 60, geometry.size.height)))
                     .foregroundColor(.green)  // Set the color of the amplitude meter.
                     .animation(.linear(duration: 0.1), value: amplitude)  // Animate changes in amplitude.
             }
