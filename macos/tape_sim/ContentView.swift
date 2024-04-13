@@ -75,10 +75,11 @@ struct ContentView: View {
 					ForEach(0..<amplitudes.count, id: \.self) { index in
 						VStack {
 							AmpMeter(amplitude: amplitudes[index])
-								.frame(height: 100)
+								.frame(width: 20, height: 300)
+								.padding()
 								.onReceive(ampTimer) { _ in
 									if (!isPlaying) {
-										amplitudes[index] = -120.0
+										amplitudes[index] = 0
 										return
 									}
 									let recordingOrPlaying = inputTrackRecordEnabledStates[index] && isRecordingEnabled ? true : false
@@ -91,11 +92,10 @@ struct ContentView: View {
 
 							Toggle(isOn: $inputTrackRecordEnabledStates[index]) {
 								Text("Track \(index + 1)")
-							}
+							}.padding()
 						}
-						.padding()
 					}
-				}
+				}.frame(height: 400)
 			}
         }
         .padding()
@@ -189,7 +189,7 @@ struct ContentView: View {
 		let normalizedValue: Float = (decibel + 120) / 120
 		let uiHeight = 10 + (normalizedValue * (300 - 10)) // UI range 10px - 300px
 		
-		return uiHeight - 50 // reduce by 40-60 to compensate
+		return uiHeight
 	}
 
     
