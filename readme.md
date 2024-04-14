@@ -1,7 +1,9 @@
 # TapeSim DAW
 Tape Sim intends to simulate a simple tape machine experience by recording and playing audio with a simple UI.
 
-The program records as many tracks as there are inputs in your default audio device and allows you to rewind, fast-forward and re-record over a section of time.
+The program can record as many tracks as there are inputs in your default audio device and allows you to rewind, fast-forward and re-record over a section of time.
+
+By selecting the checkbox next to the track name you record enable that track so that during recording those tracks will write, however they will not playback while in record-enable mode.
 
 Playback is mapped 1-1 input to output. So if there are 4 inputs, 4 wav files are created and playedback on outputs 1-4. If there are not as many outputs as inputs then the program will crash.
 
