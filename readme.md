@@ -22,6 +22,8 @@ port audio https://portaudio.com/docs/v19-doxydocs/index.html
 ## SETUP
 
 ### C Program logic layer
+GCC version I am using - Apple clang version 15.0.0 (clang-1500.1.0.2.5)
+
 If you want to work on the logic layer alone you can compile the program with gcc and use the right flags to link the dependencies including port audio. Make sure to download and compile port audio on your machine. You may need to compile targeting a certain mac version to be consistent with the SwiftUI app.
 
 Here is what I used to compile PA using cmake and setting target osx 11. 
