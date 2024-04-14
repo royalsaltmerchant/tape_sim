@@ -13,15 +13,18 @@ struct AmpMeter: View {
     var body: some View {
         GeometryReader { geometry in
             VStack {
-				Spacer()
+                // Rectangle animates from the bottom
                 Rectangle()
-                    .frame(width: 20, height: max(0, min(amplitude, geometry.size.height))) // make sure it doesn't go below zero or above max height of the frame
-                    .foregroundColor(.green)  // Set the color of the amplitude meter.
-                    .animation(.linear(duration: 0.1), value: amplitude)  // Animate changes in amplitude.
+                    .frame(width: 20, height: max(0, min(amplitude, geometry.size.height)))
+                    .foregroundColor(.green)
+                    // Ensuring the animation responds to amplitude changes
+                    .animation(.linear(duration: 0.1), value: amplitude)
             }
-            .frame(alignment: .bottom)
+            // Aligning the VStack to the bottom to let the rectangle grow upwards
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+            .background(Color.gray.opacity(0.3))  // Background color of the meter
         }
-        .frame(width: 20)
-        .background(Color.gray.opacity(0.3))  // Background color of the entire meter area.
+        .frame(width: 20)  // Fixed width of the meter
     }
 }
+

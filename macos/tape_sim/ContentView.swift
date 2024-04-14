@@ -24,9 +24,9 @@ struct ContentView: View {
     
     init() {
 		// init all input track record enabled states
-		_inputTrackRecordEnabledStates = State(initialValue: Array(repeating: true, count: Int(getInputTrackCount())))
+		_inputTrackRecordEnabledStates = State(initialValue: Array(repeating: false, count: Int(getInputTrackCount())))
 		// init amplitudes
-		_amplitudes = State(initialValue: Array(repeating: 0.0, count: Int(getInputTrackCount())))
+		_amplitudes = State(initialValue: Array(repeating: -400, count: Int(getInputTrackCount())))
 
 	}
     
@@ -91,7 +91,11 @@ struct ContentView: View {
 
 							Toggle(isOn: $inputTrackRecordEnabledStates[index]) {
 								Text("Track \(index + 1)")
-							}.padding()
+							}
+							.padding()
+							.onChange(of: inputTrackRecordEnabledStates[index]) { newValue in
+								onSetInputTrackRecordEnabled(UInt32(index), newValue)
+							}
 						}
 					}
 				}.frame(height: 400)
@@ -119,9 +123,6 @@ struct ContentView: View {
 		if !isPlaying {
 			// Map Swift Bool to C 'bool' (UInt8)
 			let recordEnabledStates = inputTrackRecordEnabledStates.map { $0 ? 1 : 0 }.map(UInt32.init)
-			recordEnabledStates.forEach { item in
-				print(item)
-			}
 			recordEnabledStates.withUnsafeBufferPointer { bufferPointer in
 				if let baseAddress = bufferPointer.baseAddress {
 					onStart(baseAddress, isRecordingEnabled)
@@ -183,11 +184,12 @@ struct ContentView: View {
     }
     
 	func decibelToHeight(decibel: Float) -> Float {
-		let normalizedValue: Float = (decibel + 120) / 120
-		let uiHeight = 10 + (normalizedValue * (300 - 10)) // UI range 10px - 300px
-		
-		return uiHeight
+		let normalizedValue: Float = (decibel + 400) / 400
+		let uiHeight = 10 + (normalizedValue * (300 - 10))
+		print(uiHeight, "UI HEIGHT")
+		return uiHeight - 200 // compensate as db never usually goes below 134
 	}
+
 
     
 }

@@ -42,12 +42,13 @@ Recorder recorder;
 void initAudio();
 void cleanupAudio();
 void onStop();
-void onStart(const unsigned int *inputTrackRecordEnabledStates, bool isRecordingFromUI);
+void onStart(const uint32_t *inputTrackRecordEnabledStates, bool isRecordingFromUI);
 void onRewind();
 void onFastForward();
 void onRtz();
 float getCurrentStartTimeInSeconds();
 unsigned int getInputTrackCount();
 float getCurrentAmplitude(unsigned int index);
+void onSetInputTrackRecordEnabled(unsigned int index, bool state);
 
 #endif
