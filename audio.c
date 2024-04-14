@@ -45,21 +45,6 @@ void checkDeviceCountAndGetAudioDeviceInfo()
   }
 }
 
-// Checks if at least `interval` milliseconds have passed since last true return
-bool canDoAgain(int interval)
-{
-  static clock_t lastDoneTime = 0;
-  clock_t currentTime = clock();
-  clock_t elapsed = ((currentTime - lastDoneTime) * 1000) / CLOCKS_PER_SEC;
-
-  if (elapsed >= interval)
-  {
-    lastDoneTime = currentTime;
-    return true;
-  }
-  return false;
-}
-
 // Function to check if a key was pressed
 bool keyPressed()
 {
@@ -129,6 +114,29 @@ void updateStartTime(float time)
 float getCurrentStartTimeInSeconds()
 {
   return startTimeInSeconds;
+}
+
+unsigned int getInputTrackCount()
+{
+  return (unsigned int)recorder.trackCount;
+}
+
+float getCurrentAmplitude(unsigned int index)
+{
+  return recorder.tracks[index].currentAmplitudeLevel;
+}
+
+void onSetInputTrackRecordEnabled(unsigned int index, bool state)
+{
+  printf("STATE: %d", state);
+  if (state == 1)
+  {
+    recorder.tracks[index].recordEnabled = true;
+  }
+  else
+  {
+    recorder.tracks[index].recordEnabled = false;
+  }
 }
 
 void inputStartTime()
@@ -236,7 +244,7 @@ WavFile *openWavFile(const char *filename)
   }
 }
 
-void initRecordingTracks()
+void initTracks(const uint32_t *inputTrackRecordEnabledStates)
 {
   for (size_t i = 0; i < recorder.trackCount; i++)
   {
@@ -244,19 +252,18 @@ void initRecordingTracks()
     snprintf(filename, sizeof(filename), "track%zu.wav", i + 1);
     WavFile *wav = openWavFile(filename);
     recorder.tracks[i] = *wav;
+    recorder.tracks[i].currentAmplitudeLevel = -400; //  minimum signal level in dap
     free(wav);
-  }
-}
 
-void initPlayerTracks()
-{
-  for (size_t i = 0; i < player.trackCount; i++)
-  {
-    char filename[256];
-    snprintf(filename, sizeof(filename), "track%zu.wav", i + 1);
-    WavFile *wav = openWavFile(filename);
-    player.tracks[i] = *wav;
-    free(wav);
+    // logic for record enabled setting
+    if (inputTrackRecordEnabledStates[i] == 1)
+    {
+      recorder.tracks[i].recordEnabled = true;
+    }
+    else
+    {
+      recorder.tracks[i].recordEnabled = false;
+    }
   }
 }
 
@@ -301,47 +308,79 @@ void closeWavFiles()
   }
 }
 
-static int recordCallback(const void *inputBuffer, void *outputBuffer,
+static int streamCallback(const void *inputBuffer, void *outputBuffer,
                           unsigned long framesPerBuffer,
                           const PaStreamCallbackTimeInfo *timeInfo,
                           PaStreamCallbackFlags statusFlags,
                           void *userData)
 {
-  // Cast inputBuffer to an array of pointers to byte arrays (one per channel)
-  const unsigned char **buffers = (const unsigned char **)inputBuffer;
-  Recorder *recorder = (Recorder *)userData;
+  const unsigned char **inputBuffers = (const unsigned char **)inputBuffer;
+  unsigned char **outputBuffers = (unsigned char **)outputBuffer;
+  size_t minReadFrames = framesPerBuffer;                   // Initialize with the maximum possible
+  unsigned char *writeBuffer = malloc(framesPerBuffer * 3); // Allocate buffer
 
-  // Assuming you have a suitable buffer allocated for accumulating the samples
-  // The buffer size needs to be at least framesPerBuffer * 3 bytes for each channel
-
-  for (int channel = 0; channel < recorder->trackCount; ++channel)
+  for (int channel = 0; channel < recorder.trackCount; ++channel)
   {
-    // calculate db levels
-    float rms = calculateRMS(buffers[channel], framesPerBuffer);
-    float dbLevel = rmsToDb(rms);
-    // Rate-limiting the print operation
-    if (canDoAgain(1))
-    { // 10 milliseconds
-      printf("Channel %d: dB Level = %f\n", channel, dbLevel);
-    }
-
-    // RECORDING
-    // channel data and write buffer for wav
-    const unsigned char *channelData = buffers[channel];
-    unsigned char *writeBuffer = malloc(framesPerBuffer * 3); // Allocate buffer for the current channel
-
-    // Accumulate the samples for the current channel into writeBuffer
-    for (unsigned long frame = 0; frame < framesPerBuffer; ++frame)
+    if (isRecording)
     {
-      int byteIndex = frame * 3;
-      memcpy(&writeBuffer[frame * 3], &channelData[byteIndex], 3);
+      if (recorder.tracks[channel].recordEnabled)
+      {
+        // set db amplitude levels
+        float rms = calculateRMS(inputBuffers[channel], framesPerBuffer);
+        float dbLevel = rmsToDb(rms);
+        printf("Recording - Channel %d: dB Level = %f\n", channel, dbLevel);
+        recorder.tracks[channel].currentAmplitudeLevel = dbLevel;
+        // channel data and write buffer for wav
+        const unsigned char *channelData = inputBuffers[channel];
+        // Accumulate the samples for the current channel into writeBuffer
+        for (unsigned long frame = 0; frame < framesPerBuffer; ++frame)
+        {
+          int byteIndex = frame * 3;
+          memcpy(&writeBuffer[frame * 3], &channelData[byteIndex], 3);
+        }
+        // Now, writeBuffer contains all the frames for the current channel, so write it all at once
+        writeWavData(&recorder.tracks[channel], writeBuffer, framesPerBuffer * 3);
+      }
     }
 
-    // Now, writeBuffer contains all the frames for the current channel, so write it all at once
-    writeWavData(&recorder->tracks[channel], writeBuffer, framesPerBuffer * 3);
+    // Handle Playback for non record enabled tracks
+    if (!recorder.tracks[channel].recordEnabled)
+    {
+      // set db amplitude levels
+      float rms = calculateRMS(outputBuffers[channel], framesPerBuffer);
+      float dbLevel = rmsToDb(rms);
+      printf("Recording - Channel %d: dB Level = %f\n", channel, dbLevel);
+      recorder.tracks[channel].currentAmplitudeLevel = dbLevel;
 
-    free(writeBuffer);
+      size_t readFrames = 0;
+      for (size_t frame = 0; frame < framesPerBuffer; ++frame)
+      {
+        if (recorder.playbackPosition + frame < recorder.tracks[channel].dataSize / 3)
+        {
+          uint8_t sampleBytes[3];
+          if (fread(sampleBytes, sizeof(uint8_t), 3, recorder.tracks[channel].file) == 3)
+          {
+            // We read 3 bytes successfully
+            memcpy(&outputBuffers[channel][frame * 3], sampleBytes, 3);
+            readFrames++;
+          }
+        }
+        else
+        {
+          // If no more data, fill with zeros
+          memset(&outputBuffers[channel][frame * 3], 0, 3);
+        }
+      }
+      // Determine the minimum readFrames across all channels for playback tracking
+      if (readFrames < minReadFrames)
+      {
+        minReadFrames = readFrames;
+      }
+    }
   }
+
+  // free the write buffer
+  free(writeBuffer);
 
   // Update the start time to reflect the current playback position
   float timeIncrement = (float)framesPerBuffer / sampleRate;
@@ -350,124 +389,56 @@ static int recordCallback(const void *inputBuffer, void *outputBuffer,
   return paContinue;
 }
 
-static int playbackCallback(const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer,
-                            const PaStreamCallbackTimeInfo *timeInfo, PaStreamCallbackFlags statusFlags, void *userData)
+void initStream()
 {
-  unsigned char **out = (unsigned char **)outputBuffer;
-  size_t minReadFrames = framesPerBuffer; // Initialize with the maximum possible, will find the minimum
-
-  for (int channel = 0; channel < player.trackCount; ++channel)
-  {
-    size_t readFrames = 0;
-    for (size_t frame = 0; frame < framesPerBuffer; ++frame)
-    {
-      if (player.playbackPosition + frame < player.tracks[channel].dataSize / 3)
-      {
-        uint8_t sampleBytes[3];
-        if (fread(sampleBytes, sizeof(uint8_t), 3, player.tracks[channel].file) == 3)
-        {
-          // We read 3 bytes successfully
-          memcpy(&out[channel][frame * 3], sampleBytes, 3);
-          readFrames++;
-        }
-      }
-      else
-      {
-        // If no more data, fill with zeros
-        memset(&out[channel][frame * 3], 0, 3);
-      }
-    }
-    // Determine the minimum readFrames across all channels
-    if (readFrames < minReadFrames)
-    {
-      minReadFrames = readFrames;
-    }
-  }
-
-  // Update the playback position after processing all channels
-  player.playbackPosition += minReadFrames;
-
-  // Update the global time based on frames processed
-  startTimeInSeconds += (float)framesPerBuffer / (float)sampleRate;
-
-  return paContinue;
-}
-
-void initRecordingStream()
-{
+  // stop if no input device
   int inputDevice = Pa_GetDefaultInputDevice();
   if (inputDevice == -1)
   {
-    inputDevice = 0;
+    printf("WARNING: No default input device found!");
+    exit(1);
   }
 
   PaError err;
   // Stream parameters
-  PaStreamParameters inputParameters,
-      outputParameters;
+  PaStreamParameters inputParameters;
   inputParameters.channelCount = recorder.trackCount;
   inputParameters.device = inputDevice;                                                                // or another specific device
   inputParameters.sampleFormat = paInt24 | paNonInterleaved;                                           // Correct way to combine flags
   inputParameters.suggestedLatency = Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency; // lowest latency
   inputParameters.hostApiSpecificStreamInfo = NULL;
 
-  printf("Initializing stream with %d channels.\n", recorder.trackCount); // Typically NULL
-
-  // start PA audio stream
-  err = Pa_OpenStream(
-      &recordingStream,
-      &inputParameters,
-      NULL, // NULL if no output is needed
-      sampleRate,
-      frames,
-      paClipOff, // or other relevant flags. Note: paNonInterleaved is NOT set here
-      recordCallback,
-      &recorder // User data passed to callback
-  );
-  if (err != paNoError)
-  {
-    printf("PortAudio error: %s\n", Pa_GetErrorText(err));
-    exit(1);
-  }
-}
-
-void initPlayerStream()
-{
-  PaError err;
-
-  initPlayerTracks();
-
-  // Calculate playback start position based on startTimeInSeconds
-  // Assuming each sample in the buffer corresponds to a frame of audio
-  size_t startPosition = (size_t)(sampleRate * startTimeInSeconds);
-  player.playbackPosition = startPosition;
-
   // Setup output parameters
   PaStreamParameters outputParameters;
   outputParameters.device = Pa_GetDefaultOutputDevice();
-  outputParameters.channelCount = player.trackCount;                                                     // Number of tracks
+  outputParameters.channelCount = recorder.trackCount;                                                   // Number of tracks
   outputParameters.sampleFormat = paInt24 | paNonInterleaved;                                            // Correct way to combine flags
   outputParameters.suggestedLatency = Pa_GetDeviceInfo(outputParameters.device)->defaultLowInputLatency; // lowest latency
   outputParameters.hostApiSpecificStreamInfo = NULL;
 
-  printf("Initializing stream with %d channels.\n", player.trackCount);
+  printf("Initializing stream with %d channels.\n", recorder.trackCount); // Typically NULL
 
-  // Open stream
+  // start PA audio stream
   err = Pa_OpenStream(
-      &playingStream,
-      NULL, // No input parameters for playback only
+      &stream,
+      &inputParameters,
       &outputParameters,
       sampleRate,
       frames,
-      paClipOff, // Don't clip output
-      playbackCallback,
-      NULL // No callback data needed
+      paClipOff, // or other relevant flags. Note: paNonInterleaved is NOT set here
+      streamCallback,
+      NULL // User data passed to callback
   );
   if (err != paNoError)
   {
     printf("PortAudio error: %s\n", Pa_GetErrorText(err));
     exit(1);
   }
+
+  // Calculate playback start position based on startTimeInSeconds
+  // Assuming each sample in the buffer corresponds to a frame of audio
+  size_t startPosition = (size_t)(sampleRate * startTimeInSeconds);
+  recorder.playbackPosition = startPosition;
 }
 
 void initAudio()
@@ -533,25 +504,20 @@ void initAudio()
   // init tracks and track count for recording and playback
   recorder.trackCount = inputChannelCount;
   recorder.tracks = malloc(sizeof(WavFile) * recorder.trackCount); // make room for as many wav files as needed tracks
-  player.trackCount = outputChannelCount;                          // this gets used as the source of truth for later when we init the stream
-  player.tracks = malloc(sizeof(WavFile) * player.trackCount);
 }
 
 void cleanupAudio()
 {
   PaError err;
   // safety close streams
-  Pa_StopStream(recordingStream);
-  Pa_CloseStream(recordingStream);
-  Pa_StopStream(playingStream);
-  Pa_CloseStream(playingStream);
+  Pa_StopStream(stream);
+  Pa_CloseStream(stream);
 
   // clean up wav files
   closeWavFiles();
 
   // free track memory
   free(recorder.tracks);
-  free(player.tracks);
 
   // close out PA
   err = Pa_Terminate();
@@ -588,26 +554,29 @@ void onFastForward()
   }
 }
 
-void onStopRecording()
+void onStop()
 {
   // Stop recording
-  Pa_StopStream(recordingStream);
-  Pa_CloseStream(recordingStream);
+  Pa_StopStream(stream);
+  Pa_CloseStream(stream);
   // clean up wav files and track  memory
   closeWavFiles(); // updates the WAV headers.
 
   printf("Recording stopped.\n");
 }
 
-void onStartRecording()
+void onStart(const uint32_t *inputTrackRecordEnabledStates, bool isRecordingFromUI)
 {
+  // handle setting is recording first
+  isRecording = isRecordingFromUI;
+
   PaError err;
-  // init recording stream
-  initRecordingStream();
   // init or re-init all wav track files with header data
-  initRecordingTracks();
+  initTracks(inputTrackRecordEnabledStates);
+  // init stream
+  initStream();
   // Start recording
-  err = Pa_StartStream(recordingStream);
+  err = Pa_StartStream(stream);
   if (err != paNoError)
   {
     printf("PortAudio error: %s\n", Pa_GetErrorText(err));
@@ -617,36 +586,12 @@ void onStartRecording()
   printf("Recording started.\n");
 }
 
-void onStartPlaying()
-{
-  PaError err;
-  // init playback stream
-  initPlayerStream();
-  // start playback
-  err = Pa_StartStream(playingStream);
-  if (err != paNoError)
-  {
-    printf("PortAudio error: %s\n", Pa_GetErrorText(err));
-    exit(1);
-  }
-
-  printf("Playing started.\n");
-}
-
-void onStopPlaying()
-{
-  // Stop recording
-  Pa_StopStream(playingStream);
-  Pa_CloseStream(playingStream);
-
-  printf("Playing stopped.\n");
-}
-
 void onRtz()
 {
   updateStartTime(0.00);
 }
 
+// TESTING
 // int main() {
 //   initAudio();
 //   onStartRecording();

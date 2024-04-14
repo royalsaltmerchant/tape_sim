@@ -10,12 +10,25 @@ import SwiftUI
 struct ContentView: View {
     @State private var isRecordingEnabled = false
     @State private var isPlaying = false
-    @State private var isRewinding = false;
-    @State private var isFastForwarding = false;
+    @State private var isRewinding = false
+    @State private var isFastForwarding = false
     @State private var startTimeInSeconds: Float = 0.0
-    private var timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
-	// High-frequency timer for rewind and fast forward
+    @State private var inputTrackRecordEnabledStates: [Bool]
+	@State private var amplitudes: [CGFloat]
+    // timer for updating start timer
+    private var startTimeTimer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
+	// timer for rewind and fast forward
     private var rewFasTimer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
+    // timer for updating amplitude levels
+	private var ampTimer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
+    
+    init() {
+		// init all input track record enabled states
+		_inputTrackRecordEnabledStates = State(initialValue: Array(repeating: false, count: Int(getInputTrackCount())))
+		// init amplitudes
+		_amplitudes = State(initialValue: Array(repeating: -400, count: Int(getInputTrackCount())))
+
+	}
     
     var body: some View {
         VStack {
@@ -25,7 +38,7 @@ struct ContentView: View {
             .padding()
             
             Text("\(startTimeInSeconds, specifier: "%.2f") seconds")
-                .onReceive(timer) { _ in
+                .onReceive(startTimeTimer) { _ in
                     startTimeInSeconds = getUpdatedStartTime() // Fetches the current start time
                 }
             
@@ -56,6 +69,37 @@ struct ContentView: View {
                 .buttonStyle(ActionButtonStyle(backgroundColor: .blue))
             }
             .padding(.horizontal)
+            
+            HStack {
+				HStack {
+					ForEach(0..<amplitudes.count, id: \.self) { index in
+						VStack {
+							AmpMeter(amplitude: amplitudes[index])
+								.frame(width: 20, height: 300)
+								.padding()
+								.onReceive(ampTimer) { _ in
+									if (!isPlaying) {
+										amplitudes[index] = 0
+										return
+									}
+									let rawAmplitude: Float = getCurrentAmplitude(UInt32(index))
+									print("Channel: ", amplitudes[index], " Raw from c to swift: ", rawAmplitude)
+									let normalizedAmplitude = decibelToHeight(decibel: rawAmplitude)
+									print("Channel: ", amplitudes[index], " Normalized amplitude: ", normalizedAmplitude)
+									amplitudes[index] = CGFloat(normalizedAmplitude)
+								}
+
+							Toggle(isOn: $inputTrackRecordEnabledStates[index]) {
+								Text("Track \(index + 1)")
+							}
+							.padding()
+							.onChange(of: inputTrackRecordEnabledStates[index]) { newValue in
+								onSetInputTrackRecordEnabled(UInt32(index), newValue)
+							}
+						}
+					}
+				}.frame(height: 400)
+			}
         }
         .padding()
 		.onReceive(rewFasTimer) { _ in
@@ -76,23 +120,20 @@ struct ContentView: View {
 		stopFastForward()
 		}
 		
-        if isRecordingEnabled {
-            if !isPlaying {
-                onStartRecording()
-                isPlaying = true
-            } else {
-                onStopRecording()
-                isPlaying = false
-            }
-        } else {
-            if !isPlaying {
-                onStartPlaying()
-                isPlaying = true
-            } else {
-                onStopPlaying()
-                isPlaying = false
-            }
-        }
+		if !isPlaying {
+			// Map Swift Bool to C 'bool' (UInt8)
+			let recordEnabledStates = inputTrackRecordEnabledStates.map { $0 ? 1 : 0 }.map(UInt32.init)
+			recordEnabledStates.withUnsafeBufferPointer { bufferPointer in
+				if let baseAddress = bufferPointer.baseAddress {
+					onStart(baseAddress, isRecordingEnabled)
+					isPlaying = true
+				}
+			}
+		} else {
+			onStop()
+			isPlaying = false
+		}
+        
     }
     
     func stop() {
@@ -103,11 +144,9 @@ struct ContentView: View {
 			stopFastForward()
 		}
 		
-        if isPlaying && isRecordingEnabled {
-            onStopRecording()
-        } else if isPlaying {
-            onStopPlaying()
-        }
+        if isPlaying {
+			onStop()
+		}
         isPlaying = false
     }
     
@@ -143,6 +182,15 @@ struct ContentView: View {
     func getUpdatedStartTime() -> Float {
         return getCurrentStartTimeInSeconds()
     }
+    
+	func decibelToHeight(decibel: Float) -> Float {
+		let normalizedValue: Float = (decibel + 400) / 400
+		let uiHeight = 10 + (normalizedValue * (300 - 10))
+		print(uiHeight, "UI HEIGHT")
+		return uiHeight - 200 // compensate as db never usually goes below 134
+	}
+
+
     
 }
 
