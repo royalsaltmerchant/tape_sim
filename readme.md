@@ -11,6 +11,14 @@ Recordings and playback are in mono at 48khz 24bit quality.
 
 Current UI available for this program is for MacOS(Intel x86_64) made with SwiftUI.
 
+SwiftUI Key Commands:
+- `Space` play/stop/rec or stop rew/fwd
+- `r` enable recording
+- `,` rewind
+- `.` fast forward
+- `z` RTZ
+
+
 ![Image of current UI in MacOS](./macosscreenshot.png)
 
 ## Resources
