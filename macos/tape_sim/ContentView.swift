@@ -36,6 +36,7 @@ struct ContentView: View {
                 Text("Enable Recording")
             }
             .padding()
+            .keyboardShortcut("r", modifiers: [])
             
             Text("\(startTimeInSeconds, specifier: "%.2f") seconds")
                 .onReceive(startTimeTimer) { _ in
@@ -47,11 +48,13 @@ struct ContentView: View {
                     Label("RTZ", systemImage: "return")
                 }
                 .buttonStyle(ActionButtonStyle(backgroundColor: .gray))
+                .keyboardShortcut("z", modifiers: [])
                 
                 Button(action: rewind) {
                     Label("REW", systemImage: "gobackward")
                 }
                 .buttonStyle(ActionButtonStyle(backgroundColor: .blue))
+                .keyboardShortcut(",", modifiers: [])
                 
                 Button(action: playOrRecord) {
                     Label(isRecordingEnabled ? "REC" : "PLAY", systemImage: isRecordingEnabled ? "record.circle" : "play.circle")
@@ -67,6 +70,7 @@ struct ContentView: View {
                     Label("FWD", systemImage: "goforward")
                 }
                 .buttonStyle(ActionButtonStyle(backgroundColor: .blue))
+                .keyboardShortcut(".", modifiers: [])
             }
             .padding(.horizontal)
             
@@ -102,6 +106,28 @@ struct ContentView: View {
 			}
         }
         .padding()
+        .onAppear() {
+			NSEvent.addLocalMonitorForEvents(matching: .keyDown) { (event) -> NSEvent? in
+				if event.keyCode == 49 { // 49 is the keycode for space
+					if (isRewinding) {
+						stopRewind()
+						return nil
+					}
+					if (isFastForwarding) {
+						stopFastForward()
+						return nil
+					}
+					if isPlaying {
+						stop()
+						return nil
+					} else {
+						playOrRecord()
+						return nil
+					}
+				}
+				return event
+			}
+		}
 		.onReceive(rewFasTimer) { _ in
 			if isRewinding {
 				rewind()
