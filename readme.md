@@ -13,7 +13,7 @@ Current UI available for this program is for MacOS(Intel x86_64) made with Swift
 
 SwiftUI Key Commands:
 - `Space` play/stop/rec or stop rew/fwd
-- `r` enable recording
+- `r` enable record mode (REC)
 - `,` rewind
 - `.` fast forward
 - `z` RTZ
