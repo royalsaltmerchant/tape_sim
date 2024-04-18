@@ -15,12 +15,10 @@ struct ContentView: View {
     @State private var startTimeInSeconds: Float = 0.0
     @State private var inputTrackRecordEnabledStates: [Bool]
 	@State private var amplitudes: [CGFloat]
-    // timer for updating start timer
-    private var startTimeTimer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
-	// timer for rewind and fast forward
-    private var rewFasTimer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
-    // timer for updating amplitude levels
-	private var ampTimer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
+    // listener to update UI for state from logic layer which need to be updated in "real time"
+    private var fastTimer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
+    // slower track count timer to update UI for track display
+    private var trackCountTimer = Timer.publish(every: 3, on: .main, in: .common).autoconnect()
     
     init() {
 		// init all input track record enabled states
@@ -33,48 +31,67 @@ struct ContentView: View {
     var body: some View {
         VStack {
             Text("\(startTimeInSeconds, specifier: "%.2f") seconds")
-                .onReceive(startTimeTimer) { _ in
+                .onReceive(fastTimer) { _ in
                     startTimeInSeconds = getUpdatedStartTime() // Fetches the current start time
                 }
+                .font(/*@START_MENU_TOKEN@*/.title/*@END_MENU_TOKEN@*/)
             
             HStack {
-				Button(action: rtz) {
-                    Label("RTZ", systemImage: "return")
-                }
-                .buttonStyle(ActionButtonStyle(backgroundColor: .gray))
-                .keyboardShortcut("z", modifiers: [])
+				VStack {
+					Button(action: rtz) {
+						Label("RTZ", systemImage: "return")
+					}
+					.buttonStyle(ActionButtonStyle(backgroundColor: .gray))
+					.keyboardShortcut("z", modifiers: [])
+					Text("(z)")
+				}
+
+                VStack {
+					Button(action: rewind) {
+						Label("REW", systemImage: "gobackward")
+					}
+					.buttonStyle(ActionButtonStyle(backgroundColor: .blue))
+					.keyboardShortcut(",", modifiers: [])
+					Text("(,)")
+				}
+
+				VStack {
+					Button(action: playOrRecord) {
+						Label("PLAY", systemImage: "play.circle")
+					}
+					.buttonStyle(ActionButtonStyle(backgroundColor: .green))
+					Text("(space)")
+				}
                 
-                Button(action: rewind) {
-                    Label("REW", systemImage: "gobackward")
-                }
-                .buttonStyle(ActionButtonStyle(backgroundColor: .blue))
-                .keyboardShortcut(",", modifiers: [])
+                VStack {
+					Button(action: {
+						isRecordingEnabled.toggle()
+					}) {
+						Label("REC", systemImage: "record.circle")
+					}
+					.buttonStyle(ActionButtonStyle(backgroundColor: isRecordingEnabled ? .red : .gray))
+					.keyboardShortcut("r", modifiers: [])
+					Text("(r)")
+				}
                 
-                Button(action: playOrRecord) {
-                    Label("PLAY", systemImage: "play.circle")
-                }
-                .buttonStyle(ActionButtonStyle(backgroundColor: .green))
+				VStack {
+					Button(action: stop) {
+						Label("STOP", systemImage: "stop.circle")
+					}
+					.buttonStyle(ActionButtonStyle(backgroundColor: .gray))
+					Text("(space)")
+				}
                 
-				Button(action: {
-					isRecordingEnabled.toggle()
-				}) {
-                    Label("REC", systemImage: "record.circle")
-                }
-                .buttonStyle(ActionButtonStyle(backgroundColor: isRecordingEnabled ? .red : .gray))
-                .keyboardShortcut("r", modifiers: [])
-                
-                Button(action: stop) {
-                    Label("STOP", systemImage: "stop.circle")
-                }
-                .buttonStyle(ActionButtonStyle(backgroundColor: .gray))
-                
-                Button(action: fastForward) {
-                    Label("FWD", systemImage: "goforward")
-                }
-                .buttonStyle(ActionButtonStyle(backgroundColor: .blue))
-                .keyboardShortcut(".", modifiers: [])
+                VStack {
+					Button(action: fastForward) {
+						Label("FWD", systemImage: "goforward")
+					}
+					.buttonStyle(ActionButtonStyle(backgroundColor: .blue))
+					.keyboardShortcut(".", modifiers: [])
+					Text("(.)")
+				}
             }
-            .padding(.horizontal)
+            .padding()
             
             HStack {
 				HStack {
@@ -83,7 +100,7 @@ struct ContentView: View {
 							AmpMeter(amplitude: amplitudes[index])
 								.frame(width: 20, height: 300)
 								.padding()
-								.onReceive(ampTimer) { _ in
+								.onReceive(fastTimer) { _ in
 									if (!isPlaying) {
 										amplitudes[index] = 0
 										return
@@ -132,12 +149,18 @@ struct ContentView: View {
 				return event
 			}
 		}
-		.onReceive(rewFasTimer) { _ in
+		.onReceive(fastTimer) { _ in
 			if isRewinding {
 				rewind()
 			}
 			if isFastForwarding {
 				fastForward()
+			}
+		}
+		.onReceive(trackCountTimer) { _ in
+			if (!isPlaying) {
+				print("checking received track count timer")
+				updateTrackCount()
 			}
 		}
     }
@@ -220,7 +243,16 @@ struct ContentView: View {
 		return uiHeight - 200 // compensate as db never usually goes below 134
 	}
 
-
+	func updateTrackCount() {
+		print("update track count function called")
+        let trackCount = Int(getInputTrackCount())
+        if trackCount != amplitudes.count {
+			print("track count is not the same")
+            // Update the state for both amplitudes and record enabled states
+            amplitudes = Array(repeating: -400, count: trackCount)
+            inputTrackRecordEnabledStates = Array(repeating: false, count: trackCount)
+        }
+    }
     
 }
 

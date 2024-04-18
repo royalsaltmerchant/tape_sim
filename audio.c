@@ -30,21 +30,6 @@ char *buildAppDirectoryPath()
   return appDirPath; // Remember to free this memory after use!
 }
 
-void checkDeviceCountAndGetAudioDeviceInfo()
-{
-  int numDevices = Pa_GetDeviceCount();
-  if (numDevices < 0)
-  {
-    printf("PortAudio error: %s\n", Pa_GetErrorText((PaError)numDevices));
-    exit(1);
-  }
-  for (size_t i = 0; i < numDevices; i++)
-  {
-    const PaDeviceInfo *deviceInfo = Pa_GetDeviceInfo(i);
-    printf("Device %zu: %s\n", i, deviceInfo->name);
-  }
-}
-
 // Function to check if a key was pressed
 bool keyPressed()
 {
@@ -104,7 +89,104 @@ float rmsToDb(float rms)
   return dbFS; // This will naturally yield negative values for rms < 1
 }
 
+// MACOS
+AudioDeviceID getDefaultMacOSInputDeviceID()
+{
+  AudioDeviceID deviceID = kAudioObjectUnknown;
+  UInt32 dataSize = sizeof(deviceID);
+  AudioObjectPropertyAddress propertyAddress = {
+      kAudioHardwarePropertyDefaultInputDevice,
+      kAudioObjectPropertyScopeGlobal,
+      kAudioObjectPropertyElementMaster};
+
+  OSStatus status = AudioObjectGetPropertyData(kAudioObjectSystemObject,
+                                               &propertyAddress,
+                                               0,
+                                               NULL,
+                                               &dataSize,
+                                               &deviceID);
+  if (status != noErr)
+  {
+    fprintf(stderr, "Failed to get the default macos input device ID\n");
+    exit(1);
+  }
+
+  return deviceID; // Return the default input device ID
+}
+
+AudioDeviceID getDefaultMacOSOutputDeviceID()
+{
+  AudioDeviceID deviceID = kAudioObjectUnknown;
+  UInt32 dataSize = sizeof(deviceID);
+  AudioObjectPropertyAddress propertyAddress = {
+      kAudioHardwarePropertyDefaultOutputDevice,
+      kAudioObjectPropertyScopeGlobal,
+      kAudioObjectPropertyElementMaster};
+
+  OSStatus status = AudioObjectGetPropertyData(kAudioObjectSystemObject,
+                                               &propertyAddress,
+                                               0,
+                                               NULL,
+                                               &dataSize,
+                                               &deviceID);
+  if (status != noErr)
+  {
+    fprintf(stderr, "Failed to get the default macos output device ID\n");
+    exit(1);
+  }
+
+  return deviceID; // Return the default output device ID
+}
+
+void checkDeviceCountAndGetAudioDeviceInfo()
+{
+  short numDevices = Pa_GetDeviceCount();
+  if (numDevices < 0)
+  {
+    printf("PortAudio error: %s\n", Pa_GetErrorText((PaError)numDevices));
+    exit(1);
+  }
+  for (size_t i = 0; i < numDevices; i++)
+  {
+    const PaDeviceInfo *deviceInfo = Pa_GetDeviceInfo(i);
+    printf("Device %zu: %s\n", i, deviceInfo->name);
+  }
+}
 // END UTILITY FUNCTIONS
+
+int checkPAIOAndGetChannelCount()
+{
+  // max track count for default input device
+  int inputDevice = Pa_GetDefaultInputDevice();
+  int outputDevice = Pa_GetDefaultOutputDevice();
+  // check that we have both IO devices from default setup
+  if (inputDevice == -1 || outputDevice == -1)
+  {
+    exit(1);
+  }
+  // get IO device info
+  const PaDeviceInfo *inputDeviceInfo = Pa_GetDeviceInfo(inputDevice);
+  const PaDeviceInfo *outputDeviceInfo = Pa_GetDeviceInfo(outputDevice);
+  // set channel count
+  int inputChannelCount = inputDeviceInfo->maxInputChannels;
+  int outputChannelCount = outputDeviceInfo->maxOutputChannels;
+
+  // handle input count error
+  if (inputChannelCount <= 0)
+  {
+    printf("Error: Invalid number of input channels (%d). Must be greater than 0.\n", inputChannelCount);
+    exit(1);
+  }
+
+  if (outputChannelCount < inputChannelCount)
+  {
+    printf("Error: There are not enough output channels (%d) to match input channels\n", outputChannelCount);
+    exit(1);
+  }
+
+  // we can return size_t because channel count should always be above 0 otherwise we crash
+  return inputChannelCount;
+}
 
 void updateStartTime(float time)
 {
@@ -116,9 +198,36 @@ float getCurrentStartTimeInSeconds()
   return startTimeInSeconds;
 }
 
-unsigned int getInputTrackCount()
+void setInputTrackCount(int inputChannelCount)
 {
-  return (unsigned int)recorder.trackCount;
+  if (recorder.tracks != NULL)
+  {
+    free(recorder.tracks);
+    recorder.tracks = NULL;
+  }
+  recorder.trackCount = inputChannelCount;
+  recorder.tracks = calloc(sizeof(WavFile) * recorder.trackCount, sizeof(WavFile)); // make room for as many wav files as needed tracks
+  // handle allocation error
+  if (recorder.tracks == NULL && recorder.trackCount > 0)
+  {
+    // Handle allocation failure; possibly set trackCount to 0 or take other corrective actions
+    printf("Failed to allocate memory for tracks.\n");
+    exit(1);
+  }
+}
+
+int getInputTrackCount()
+{
+  // if macos device defaults change
+  AudioDeviceID defaultMacOSInputDevice = getDefaultMacOSInputDeviceID();
+  AudioDeviceID defaultMacOSOutputDevice = getDefaultMacOSOutputDeviceID();
+  if (defaultMacOSInputDevice != currentDefaultMacOSInputDevice || defaultMacOSOutputDevice != currentDefaultMacOSOutputDevice)
+  {
+    cleanupAudio();
+    initAudio();
+  }
+  // after we re-init and set the recorder.trackCount we should now be returning the latest state update
+  return recorder.trackCount;
 }
 
 float getCurrentAmplitude(unsigned int index)
@@ -297,7 +406,7 @@ void closeWavFiles()
 
     // Move to the start of the file size field
     fseek(recorder.tracks[i].file, 4, SEEK_SET);
-    uint32_t fileSizeMinus8 = finalDataSize + 36; // Size of 'WAVEfmt ' and 'data' headers plus dataSize
+    int fileSizeMinus8 = finalDataSize + 36; // Size of 'WAVEfmt ' and 'data' headers plus dataSize
     fwrite(&fileSizeMinus8, sizeof(fileSizeMinus8), 1, recorder.tracks[i].file);
 
     // Move to the start of the data size field
@@ -319,7 +428,7 @@ static int streamCallback(const void *inputBuffer, void *outputBuffer,
   size_t minReadFrames = framesPerBuffer;                   // Initialize with the maximum possible
   unsigned char *writeBuffer = malloc(framesPerBuffer * 3); // Allocate buffer
 
-  for (int channel = 0; channel < recorder.trackCount; ++channel)
+  for (size_t channel = 0; channel < recorder.trackCount; ++channel)
   {
     if (isRecording)
     {
@@ -346,13 +455,9 @@ static int streamCallback(const void *inputBuffer, void *outputBuffer,
     // Handle Playback for non record enabled tracks
     if (!recorder.tracks[channel].recordEnabled)
     {
-      // set db amplitude levels
-      float rms = calculateRMS(outputBuffers[channel], framesPerBuffer);
-      float dbLevel = rmsToDb(rms);
-      printf("Recording - Channel %d: dB Level = %f\n", channel, dbLevel);
-      recorder.tracks[channel].currentAmplitudeLevel = dbLevel;
-
+      float dbLevel = -400; // Default to a very low dB level if no data is read
       size_t readFrames = 0;
+
       for (size_t frame = 0; frame < framesPerBuffer; ++frame)
       {
         if (recorder.playbackPosition + frame < recorder.tracks[channel].dataSize / 3)
@@ -360,17 +465,28 @@ static int streamCallback(const void *inputBuffer, void *outputBuffer,
           uint8_t sampleBytes[3];
           if (fread(sampleBytes, sizeof(uint8_t), 3, recorder.tracks[channel].file) == 3)
           {
-            // We read 3 bytes successfully
             memcpy(&outputBuffers[channel][frame * 3], sampleBytes, 3);
             readFrames++;
+          }
+          else
+          {
+            memset(&outputBuffers[channel][frame * 3], 0, 3); // Fail-safe clear in case of read failure
           }
         }
         else
         {
-          // If no more data, fill with zeros
-          memset(&outputBuffers[channel][frame * 3], 0, 3);
+          memset(&outputBuffers[channel][frame * 3], 0, 3); // Zero out the buffer beyond data size
         }
       }
+
+      if (readFrames > 0)
+      {
+        float rms = calculateRMS(outputBuffers[channel], readFrames);
+        dbLevel = rmsToDb(rms);
+      }
+      printf("Playback - Channel %d: dB Level = %f\n", channel, dbLevel);
+      recorder.tracks[channel].currentAmplitudeLevel = dbLevel;
+
       // Determine the minimum readFrames across all channels for playback tracking
       if (readFrames < minReadFrames)
       {
@@ -443,6 +559,9 @@ void initStream()
 
 void initAudio()
 {
+  currentDefaultMacOSInputDevice = getDefaultMacOSInputDeviceID();
+  currentDefaultMacOSOutputDevice = getDefaultMacOSOutputDeviceID();
+
   PaError err;
   // init PA
   err = Pa_Initialize();
@@ -452,58 +571,9 @@ void initAudio()
     exit(1);
   }
 
-  // get device info and check device count to ensure it is not negative
-  checkDeviceCountAndGetAudioDeviceInfo();
+  size_t inputChannelCount = checkPAIOAndGetChannelCount();
 
-  // setup recorder multi tracks
-  // max track count for default input device
-  int inputDevice = Pa_GetDefaultInputDevice();
-  int outputDevice = Pa_GetDefaultOutputDevice();
-  if (inputDevice == -1)
-  {
-    inputDevice = 0;
-  }
-  if (outputDevice == -1)
-  {
-    outputDevice = 0;
-  }
-
-  const PaDeviceInfo *inputDeviceInfo = Pa_GetDeviceInfo(inputDevice);
-  const PaDeviceInfo *outputDeviceInfo = Pa_GetDeviceInfo(outputDevice);
-
-  int inputChannelCount = inputDeviceInfo->maxInputChannels;
-  int outputChannelCount = outputDeviceInfo->maxOutputChannels;
-
-  // handle input count error
-  if (inputChannelCount <= 0 || inputChannelCount > 64)
-  {
-    printf("Error: Invalid number of input channels (%d). Must be between 1 and 64.\n", inputChannelCount);
-    exit(1);
-  }
-
-  // handle output count error
-  if (outputChannelCount <= 0)
-  {
-    printf("Error: There are no output channels.\n", outputChannelCount);
-    exit(1);
-  }
-  if (outputChannelCount < inputChannelCount)
-  {
-    printf("Error: There are not enough output channels to match input channels\n", outputChannelCount);
-    exit(1);
-  }
-  // If there are more output channels than input, make them equal 1-1
-  if (outputChannelCount > inputChannelCount)
-  {
-    outputChannelCount = inputChannelCount;
-  }
-
-  printf("max input channels: %d\n", inputChannelCount);
-  printf("max output channels %d\n", outputChannelCount);
-
-  // init tracks and track count for recording and playback
-  recorder.trackCount = inputChannelCount;
-  recorder.tracks = malloc(sizeof(WavFile) * recorder.trackCount); // make room for as many wav files as needed tracks
+  setInputTrackCount(inputChannelCount);
 }
 
 void cleanupAudio()
@@ -512,12 +582,6 @@ void cleanupAudio()
   // safety close streams
   Pa_StopStream(stream);
   Pa_CloseStream(stream);
-
-  // clean up wav files
-  closeWavFiles();
-
-  // free track memory
-  free(recorder.tracks);
 
   // close out PA
   err = Pa_Terminate();
