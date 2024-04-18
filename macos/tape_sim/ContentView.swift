@@ -32,12 +32,6 @@ struct ContentView: View {
     
     var body: some View {
         VStack {
-            Toggle(isOn: $isRecordingEnabled) {
-                Text("Enable Recording")
-            }
-            .padding()
-            .keyboardShortcut("r", modifiers: [])
-            
             Text("\(startTimeInSeconds, specifier: "%.2f") seconds")
                 .onReceive(startTimeTimer) { _ in
                     startTimeInSeconds = getUpdatedStartTime() // Fetches the current start time
@@ -57,9 +51,17 @@ struct ContentView: View {
                 .keyboardShortcut(",", modifiers: [])
                 
                 Button(action: playOrRecord) {
-                    Label(isRecordingEnabled ? "REC" : "PLAY", systemImage: isRecordingEnabled ? "record.circle" : "play.circle")
+                    Label("PLAY", systemImage: "play.circle")
                 }
-                .buttonStyle(ActionButtonStyle(backgroundColor: isRecordingEnabled ? .red : .green))
+                .buttonStyle(ActionButtonStyle(backgroundColor: .green))
+                
+				Button(action: {
+					isRecordingEnabled.toggle()
+				}) {
+                    Label("REC", systemImage: "record.circle")
+                }
+                .buttonStyle(ActionButtonStyle(backgroundColor: isRecordingEnabled ? .red : .gray))
+                .keyboardShortcut("r", modifiers: [])
                 
                 Button(action: stop) {
                     Label("STOP", systemImage: "stop.circle")
@@ -94,12 +96,14 @@ struct ContentView: View {
 								}
 
 							Toggle(isOn: $inputTrackRecordEnabledStates[index]) {
-								Text("Track \(index + 1)")
+							
 							}
 							.padding()
+							.disabled(isPlaying)
 							.onChange(of: inputTrackRecordEnabledStates[index]) { newValue in
 								onSetInputTrackRecordEnabled(UInt32(index), newValue)
 							}
+							Text("\(index + 1)")
 						}
 					}
 				}.frame(height: 400)
