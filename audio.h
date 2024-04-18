@@ -12,6 +12,8 @@
 #include <math.h>
 #include <stdbool.h>
 #include "../portaudio/include/portaudio.h"
+// macos specific
+#include <CoreAudio/CoreAudio.h>
 
 // SETUP
 float startTimeInSeconds = 0;
@@ -20,6 +22,8 @@ int bitDepth = 24;
 PaStream *stream;
 int frames = 256;
 bool isRecording;
+AudioDeviceID currentDefaultMacOSInputDevice;
+AudioDeviceID currentDefaultMacOSOutputDevice;
 
 typedef struct
 {
@@ -32,11 +36,11 @@ typedef struct
 typedef struct
 {
   WavFile *tracks;
-  size_t trackCount;
+  int trackCount;
   int playbackPosition;      // Current playback position in the buffer
 } Recorder;
 
-Recorder recorder;
+Recorder recorder = {NULL, 0, 0}; // Initializer ensures tracks is NULL
 
 // functions
 void initAudio();
@@ -47,7 +51,7 @@ void onRewind();
 void onFastForward();
 void onRtz();
 float getCurrentStartTimeInSeconds();
-unsigned int getInputTrackCount();
+int getInputTrackCount();
 float getCurrentAmplitude(unsigned int index);
 void onSetInputTrackRecordEnabled(unsigned int index, bool state);
 
