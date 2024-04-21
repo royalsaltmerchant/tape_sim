@@ -1,4 +1,3 @@
-// gcc -o audio audio.c -lportaudio
 #include "audio.h"
 
 // END SETUP
@@ -30,50 +29,17 @@ char *buildAppDirectoryPath()
   return appDirPath; // Remember to free this memory after use!
 }
 
-// Function to check if a key was pressed
-bool keyPressed()
-{
-  struct timeval tv = {0L, 0L};
-  fd_set fds;
-  FD_ZERO(&fds);
-  FD_SET(0, &fds); // STDIN_FILENO is 0
-  return select(1, &fds, NULL, NULL, &tv) > 0;
-}
-
-// Function to get the pressed key without waiting for Enter key
-int getCharNonBlocking()
-{
-  struct termios oldt, newt;
-  int ch;
-  tcgetattr(STDIN_FILENO, &oldt); // Get current terminal attributes
-  newt = oldt;
-  newt.c_lflag &= ~(ICANON | ECHO);        // Disable buffering and echo
-  tcsetattr(STDIN_FILENO, TCSANOW, &newt); // Apply new settings
-
-  if (keyPressed())
-  { // Check if a key was pressed
-    ch = getchar();
-  }
-  else
-  {
-    ch = -1; // No key was pressed
-  }
-
-  tcsetattr(STDIN_FILENO, TCSANOW, &oldt); // Restore terminal attributes
-  return ch;
-}
-
 float calculateRMS(const unsigned char *buffer, size_t framesPerBuffer)
 {
   float sum = 0.0;
   for (size_t i = 0; i < framesPerBuffer; i++)
   {
-    // Convert 3 bytes to one 24-bit int
-    int sample24bit = (buffer[3 * i] << 8) | (buffer[3 * i + 1] << 16) | (buffer[3 * i + 2] << 24);
-    sample24bit >>= 8; // Convert to signed 32-bit int
-
-    // Now convert to float
-    float sampleFloat = sample24bit / (float)INT32_MAX;
+    int sample24bit = (buffer[3 * i + 2] << 16) | (buffer[3 * i + 1] << 8) | buffer[3 * i];
+    if (sample24bit & 0x800000)
+    {                           // if the highest bit is set, the sample is negative
+      sample24bit |= ~0xFFFFFF; // extend the sign to 32 bits
+    }
+    float sampleFloat = sample24bit / (float)0x800000; // Normalize by the maximum possible value of a 24-bit int
     sum += sampleFloat * sampleFloat;
   }
   float rms = sqrt(sum / framesPerBuffer);
@@ -188,14 +154,14 @@ int checkPAIOAndGetChannelCount()
   return inputChannelCount;
 }
 
-void updateStartTime(float time)
-{
-  startTimeInSeconds = time;
-}
-
 float getCurrentStartTimeInSeconds()
 {
   return startTimeInSeconds;
+}
+
+void updateStartTime(float time)
+{
+  startTimeInSeconds = time;
 }
 
 void setInputTrackCount(int inputChannelCount)
@@ -245,32 +211,6 @@ void onSetInputTrackRecordEnabled(unsigned int index, bool state)
   else
   {
     recorder.tracks[index].recordEnabled = false;
-  }
-}
-
-void inputStartTime()
-{
-  float time;
-  printf("Enter new start time in seconds (current: %f): ", startTimeInSeconds);
-  if (scanf("%f", &time) == 1)
-  { // Ensure scanf successfully reads a float
-    // Validate the input time range
-    if (time >= 0 && time <= 3600)
-    { // 0 to 3600 seconds range
-      updateStartTime(time);
-      printf("Start time updated to %f seconds.\n", time);
-    }
-    else
-    {
-      printf("Invalid input: start time must be between 0 and 3600 seconds.\n");
-    }
-  }
-  else
-  {
-    // Clear the input buffer to prevent infinite loops in case of invalid input
-    while (getchar() != '\n')
-      ;
-    printf("Invalid input: please enter a numeric value.\n");
   }
 }
 
@@ -361,7 +301,7 @@ void initTracks(const uint32_t *inputTrackRecordEnabledStates)
     snprintf(filename, sizeof(filename), "track%zu.wav", i + 1);
     WavFile *wav = openWavFile(filename);
     recorder.tracks[i] = *wav;
-    recorder.tracks[i].currentAmplitudeLevel = -400; //  minimum signal level in dap
+    recorder.tracks[i].currentAmplitudeLevel = -100; //  minimum signal level in dap
     free(wav);
 
     // logic for record enabled setting
@@ -455,7 +395,7 @@ static int streamCallback(const void *inputBuffer, void *outputBuffer,
     // Handle Playback for non record enabled tracks
     if (!recorder.tracks[channel].recordEnabled)
     {
-      float dbLevel = -400; // Default to a very low dB level if no data is read
+      float dbLevel = -100; // Default to a very low dB level if no data is read
       size_t readFrames = 0;
 
       for (size_t frame = 0; frame < framesPerBuffer; ++frame)
@@ -654,16 +594,3 @@ void onRtz()
 {
   updateStartTime(0.00);
 }
-
-// TESTING
-// int main() {
-//   initAudio();
-//   onStartRecording();
-//   sleep(3);
-//   onStopRecording();
-//   onStartPlaying();
-//   sleep(3);
-//   onStopPlaying();
-
-//   cleanupAudio();
-// }

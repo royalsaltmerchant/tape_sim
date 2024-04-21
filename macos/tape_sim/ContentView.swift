@@ -24,7 +24,7 @@ struct ContentView: View {
 		// init all input track record enabled states
 		_inputTrackRecordEnabledStates = State(initialValue: Array(repeating: false, count: Int(getInputTrackCount())))
 		// init amplitudes
-		_amplitudes = State(initialValue: Array(repeating: -400, count: Int(getInputTrackCount())))
+		_amplitudes = State(initialValue: Array(repeating: -100, count: Int(getInputTrackCount())))
 
 	}
     
@@ -59,6 +59,7 @@ struct ContentView: View {
 					Button(action: playOrRecord) {
 						Label("PLAY", systemImage: "play.circle")
 					}
+					.disabled(isPlaying)
 					.buttonStyle(ActionButtonStyle(backgroundColor: .green))
 					Text("(space)")
 				}
@@ -69,6 +70,7 @@ struct ContentView: View {
 					}) {
 						Label("REC", systemImage: "record.circle")
 					}
+					.disabled(isPlaying)
 					.buttonStyle(ActionButtonStyle(backgroundColor: isRecordingEnabled ? .red : .gray))
 					.keyboardShortcut("r", modifiers: [])
 					Text("(r)")
@@ -106,9 +108,7 @@ struct ContentView: View {
 										return
 									}
 									let rawAmplitude: Float = getCurrentAmplitude(UInt32(index))
-									print("Channel: ", amplitudes[index], " Raw from c to swift: ", rawAmplitude)
 									let normalizedAmplitude = decibelToHeight(decibel: rawAmplitude)
-									print("Channel: ", amplitudes[index], " Normalized amplitude: ", normalizedAmplitude)
 									amplitudes[index] = CGFloat(normalizedAmplitude)
 								}
 
@@ -159,7 +159,6 @@ struct ContentView: View {
 		}
 		.onReceive(trackCountTimer) { _ in
 			if (!isPlaying) {
-				print("checking received track count timer")
 				updateTrackCount()
 			}
 		}
@@ -237,19 +236,16 @@ struct ContentView: View {
     }
     
 	func decibelToHeight(decibel: Float) -> Float {
-		let normalizedValue: Float = (decibel + 400) / 400
+		let normalizedValue: Float = (decibel + 100) / 100
 		let uiHeight = 10 + (normalizedValue * (300 - 10))
-		print(uiHeight, "UI HEIGHT")
-		return uiHeight - 200 // compensate as db never usually goes below 134
+		return uiHeight
 	}
 
 	func updateTrackCount() {
-		print("update track count function called")
         let trackCount = Int(getInputTrackCount())
         if trackCount != amplitudes.count {
-			print("track count is not the same")
             // Update the state for both amplitudes and record enabled states
-            amplitudes = Array(repeating: -400, count: trackCount)
+            amplitudes = Array(repeating: -100, count: trackCount)
             inputTrackRecordEnabledStates = Array(repeating: false, count: trackCount)
         }
     }
