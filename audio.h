@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -18,7 +19,7 @@
 // SETUP
 float startTimeInSeconds = 0;
 int sampleRate = 48000;
-int bitDepth = 24;
+short bitDepth = 24;
 PaStream *stream;
 int frames = 256;
 bool isRecording;
@@ -28,7 +29,7 @@ AudioDeviceID currentDefaultMacOSOutputDevice;
 typedef struct
 {
   FILE *file;
-  size_t dataSize;
+  size_t dataSize; // not including header
   float currentAmplitudeLevel;
   bool recordEnabled;
 } WavFile;
