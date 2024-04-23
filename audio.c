@@ -1,7 +1,5 @@
 #include "audio.h"
 
-// END SETUP
-
 // UTILITY FUNCTIONS
 // Function to build a directory path for your app within the user's home directory
 char *buildAppDirectoryPath()
@@ -29,6 +27,7 @@ char *buildAppDirectoryPath()
   return appDirPath; // Remember to free this memory after use!
 }
 
+// For calculating db levels
 float calculateRMS(const unsigned char *buffer, size_t framesPerBuffer)
 {
   float sum = 0.0;
@@ -54,6 +53,7 @@ float rmsToDb(float rms)
   float dbFS = 20.0 * log10(rms);
   return dbFS; // This will naturally yield negative values for rms < 1
 }
+
 
 // MACOS
 AudioDeviceID getDefaultMacOSInputDeviceID()
@@ -118,7 +118,6 @@ void checkDeviceCountAndGetAudioDeviceInfo()
     printf("Device %zu: %s\n", i, deviceInfo->name);
   }
 }
-// END UTILITY FUNCTIONS
 
 int checkPAIOAndGetChannelCount()
 {
@@ -214,26 +213,26 @@ void onSetInputTrackRecordEnabled(unsigned int index, bool state)
   }
 }
 
-WavFile *openWavFile(const char *filename)
+WavFile *openWavFile(const char *filename, char *directoryPath, short numChannels)
 {
-  char *directoryPath = buildAppDirectoryPath(); // Build or get the directory path
+  printf("NUM CHANNELS: %d\n", numChannels);
+
   if (!directoryPath)
   {
+    printf("Error: Path is not a directory when opening wav file\n");
+    exit(1);
+  }
+
+  if (numChannels < 1 || numChannels > 2)
+  {
+    printf("Error: Number of channels is incorrect when opening a wav file, should be either 1 or 2\n");
     exit(1);
   }
 
   char *filePath = malloc(strlen(directoryPath) + strlen(filename) + 2); // +2 for '/' and null terminator
-  if (!filePath)
-  {
-    free(directoryPath);
-    exit(1);
-  }
-
   sprintf(filePath, "%s/%s", directoryPath, filename);
 
   WavFile *wav = malloc(sizeof(WavFile));
-  if (!wav)
-    exit(1);
 
   // Check if the file already exists
   bool fileExists = access(filePath, F_OK) != -1;
@@ -241,17 +240,11 @@ WavFile *openWavFile(const char *filename)
   size_t headerSize = 44;
   int subchunk1Size = 16; // For PCM
   short audioFormat = 1;  // PCM = 1 means no compression
-  short numChannels = 1;
   int byteRate = sampleRate * numChannels * (bitDepth / 8);
   short blockAlign = numChannels * (bitDepth / 8);
 
   // Open or create the file
   wav->file = fopen(filePath, fileExists ? "r+b" : "wb");
-  if (!wav->file)
-  {
-    free(wav);
-    exit(1);
-  }
 
   if (!fileExists)
   {
@@ -293,16 +286,23 @@ WavFile *openWavFile(const char *filename)
   }
 }
 
-void initTracks(const uint32_t *inputTrackRecordEnabledStates)
+void initTracks()
 {
   for (size_t i = 0; i < recorder.trackCount; i++)
   {
     char filename[256];
     snprintf(filename, sizeof(filename), "track%zu.wav", i + 1);
-    WavFile *wav = openWavFile(filename);
+    WavFile *wav = openWavFile(filename, buildAppDirectoryPath(), 1);
     recorder.tracks[i] = *wav;
     recorder.tracks[i].currentAmplitudeLevel = -100; //  minimum signal level in dap
     free(wav);
+  }
+}
+
+void initTrackRecordEnabledStates(const uint32_t *inputTrackRecordEnabledStates)
+{
+  for (size_t i = 0; i < recorder.trackCount; i++)
+  {
 
     // logic for record enabled setting
     if (inputTrackRecordEnabledStates[i] == 1)
@@ -318,9 +318,6 @@ void initTracks(const uint32_t *inputTrackRecordEnabledStates)
 
 void writeWavData(WavFile *wav, const void *data, size_t dataSize)
 {
-  if (!wav || !wav->file)
-    return;
-
   // Write the new data
   fwrite(data, 1, dataSize, wav->file);
 
@@ -337,23 +334,27 @@ void writeWavData(WavFile *wav, const void *data, size_t dataSize)
   // Note: wav->dataSize is initially set based on the file's original dataSize when opened
 }
 
+void closeWavFile(WavFile *wav)
+{
+  size_t finalDataSize = wav->dataSize;
+
+  // Move to the start of the file size field
+  fseek(wav->file, 4, SEEK_SET);
+  int fileSizeMinus8 = finalDataSize + 36; // Size of 'WAVEfmt ' and 'data' headers plus dataSize
+  fwrite(&fileSizeMinus8, sizeof(fileSizeMinus8), 1, wav->file);
+
+  // Move to the start of the data size field
+  fseek(wav->file, 40, SEEK_SET);
+  fwrite(&finalDataSize, sizeof(finalDataSize), 1, wav->file);
+
+  fclose(wav->file);
+}
+
 void closeWavFiles()
 {
   for (size_t i = 0; i < recorder.trackCount; i++)
   {
-
-    size_t finalDataSize = recorder.tracks[i].dataSize;
-
-    // Move to the start of the file size field
-    fseek(recorder.tracks[i].file, 4, SEEK_SET);
-    int fileSizeMinus8 = finalDataSize + 36; // Size of 'WAVEfmt ' and 'data' headers plus dataSize
-    fwrite(&fileSizeMinus8, sizeof(fileSizeMinus8), 1, recorder.tracks[i].file);
-
-    // Move to the start of the data size field
-    fseek(recorder.tracks[i].file, 40, SEEK_SET);
-    fwrite(&finalDataSize, sizeof(finalDataSize), 1, recorder.tracks[i].file);
-
-    fclose(recorder.tracks[i].file);
+    closeWavFile(&recorder.tracks[i]);
   }
 }
 
@@ -451,7 +452,7 @@ void initStream()
   int inputDevice = Pa_GetDefaultInputDevice();
   if (inputDevice == -1)
   {
-    printf("WARNING: No default input device found!");
+    printf("Error: No default input device found!");
     exit(1);
   }
 
@@ -576,7 +577,8 @@ void onStart(const uint32_t *inputTrackRecordEnabledStates, bool isRecordingFrom
 
   PaError err;
   // init or re-init all wav track files with header data
-  initTracks(inputTrackRecordEnabledStates);
+  initTracks();
+  initTrackRecordEnabledStates(inputTrackRecordEnabledStates);
   // init stream
   initStream();
   // Start recording
