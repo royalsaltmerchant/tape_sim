@@ -7,6 +7,7 @@
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <pwd.h>
 #include <termios.h>
 #include <string.h>
 #include <time.h>
