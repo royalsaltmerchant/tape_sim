@@ -2,6 +2,8 @@
 Tape Sim intends to simulate a simple tape machine experience by recording and playing audio with a simple UI.
 
 The program can record as many tracks as there are inputs in your default audio device and allows you to rewind, fast-forward and re-record over a section of time.
+Your Recordings will be saved to the directory `/Users/<username>/Music/tape_sim`
+They will be named as such: `track1.wav` for as many inputs as are available.
 
 By selecting the checkbox next to the track name you record enable that track so that during recording those tracks will write, however they will not playback while in record-enable mode.
 
