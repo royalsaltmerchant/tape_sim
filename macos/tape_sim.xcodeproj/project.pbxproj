@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		E926FF8E2BC0C11B00C6AF96 /* audio.c in Sources */ = {isa = PBXBuildFile; fileRef = E926FF8C2BC0C11B00C6AF96 /* audio.c */; };
+		E9304A782BDC28F100A5C69D /* Bounce.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9304A772BDC28F100A5C69D /* Bounce.swift */; };
 		E97FBD6F2BC9D3EB006C388D /* AmpMeter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E97FBD6E2BC9D3EB006C388D /* AmpMeter.swift */; };
 		E9AF104B2BC396E900DB0A35 /* libportaudio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E9AF104A2BC396E900DB0A35 /* libportaudio.a */; };
 		E9AF104D2BC3971800DB0A35 /* include in Resources */ = {isa = PBXBuildFile; fileRef = E9AF104C2BC3971800DB0A35 /* include */; };
@@ -29,6 +30,7 @@
 		E926FF872BC0A98D00C6AF96 /* portaudio.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = portaudio.h; path = ../../../../../../usr/local/Cellar/portaudio/19.7.0/include/portaudio.h; sourceTree = "<group>"; };
 		E926FF8C2BC0C11B00C6AF96 /* audio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = audio.c; path = ../../audio.c; sourceTree = "<group>"; };
 		E926FF8D2BC0C11B00C6AF96 /* audio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = audio.h; path = ../../audio.h; sourceTree = "<group>"; };
+		E9304A772BDC28F100A5C69D /* Bounce.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bounce.swift; sourceTree = "<group>"; };
 		E97FBD6E2BC9D3EB006C388D /* AmpMeter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmpMeter.swift; sourceTree = "<group>"; };
 		E9AF10472BC389CD00DB0A35 /* libportaudio.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libportaudio.2.dylib; path = ../../../../../../usr/local/Cellar/portaudio/19.7.0/lib/libportaudio.2.dylib; sourceTree = "<group>"; };
 		E9AF104A2BC396E900DB0A35 /* libportaudio.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libportaudio.a; sourceTree = "<group>"; };
@@ -108,6 +110,7 @@
 				E9CCE8A02BC092B600EEB820 /* tape_sim-Bridging-Header.h */,
 				E9CCE8912BC0908D00EEB820 /* tape_simApp.swift */,
 				E9CCE8932BC0908D00EEB820 /* ContentView.swift */,
+				E9304A772BDC28F100A5C69D /* Bounce.swift */,
 				E9CCE8952BC0908F00EEB820 /* Assets.xcassets */,
 				E9CCE89A2BC0908F00EEB820 /* tape_sim.entitlements */,
 				E9CCE8972BC0908F00EEB820 /* Preview Content */,
@@ -197,6 +200,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E97FBD6F2BC9D3EB006C388D /* AmpMeter.swift in Sources */,
+				E9304A782BDC28F100A5C69D /* Bounce.swift in Sources */,
 				E926FF8E2BC0C11B00C6AF96 /* audio.c in Sources */,
 				E9CCE8942BC0908D00EEB820 /* ContentView.swift in Sources */,
 				E9CCE8922BC0908D00EEB820 /* tape_simApp.swift in Sources */,
@@ -357,7 +361,7 @@
 				);
 				MACH_O_TYPE = mh_execute;
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 1.8;
+				MARKETING_VERSION = 1.9;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.salt.tape-sim";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -400,7 +404,7 @@
 				);
 				MACH_O_TYPE = mh_execute;
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 1.8;
+				MARKETING_VERSION = 1.9;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.salt.tape-sim";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

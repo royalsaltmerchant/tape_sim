@@ -22,6 +22,28 @@ char *buildAppDirectoryPath()
   return appDirPath; // Remember to free this memory after use!
 }
 
+void separatePathFromTitle(const char *selectedPath, char **dirPath, char **trackTitle)
+{
+  // Find the last occurrence of '/' which separates directory path and file name
+  const char *lastSlash = strrchr(selectedPath, '/');
+  if (lastSlash == NULL)
+  {
+    // Handle the case where there's no slash; assume current directory
+    *dirPath = strdup(".");
+    *trackTitle = strdup(selectedPath);
+  }
+  else
+  {
+    // Allocate memory and copy directory path
+    *dirPath = (char *)malloc(lastSlash - selectedPath + 2); // +1 for null terminator, +1 to include '/'
+    strncpy(*dirPath, selectedPath, lastSlash - selectedPath + 1);
+    (*dirPath)[lastSlash - selectedPath + 1] = '\0'; // Ensure null-terminated
+
+    // Allocate memory and copy the track title (filename)
+    *trackTitle = strdup(lastSlash + 1);
+  }
+}
+
 // For calculating db levels
 float calculateRMS(const unsigned char *buffer, size_t framesPerBuffer)
 {
@@ -47,6 +69,46 @@ float rmsToDb(float rms)
     rms = 1e-20;
   float dbFS = 20.0 * log10(rms);
   return dbFS; // This will naturally yield negative values for rms < 1
+}
+
+int calculateAudioDuration(size_t audioDataSize, int channels)
+{
+  size_t bytesPerSample = bitDepth / 8;
+  int durationInSeconds = (int)audioDataSize / (bytesPerSample * sampleRate * channels);
+  return durationInSeconds;
+}
+
+size_t calculateBufferSize(int channels, int durationInSeconds)
+{
+  size_t bytesPerSample = bitDepth / 8;
+  size_t samplesPerChannel = (size_t)(sampleRate * durationInSeconds);
+  size_t totalBufferSize = samplesPerChannel * bytesPerSample * channels;
+  return totalBufferSize;
+}
+
+void mixMonoTrackToStereoBuffer(WavFile *monoTrack, unsigned char *stereoBuffer, size_t bufferSize, int channel)
+{
+  fseek(monoTrack->file, 0, SEEK_END);
+  long fileSize = ftell(monoTrack->file);
+  rewind(monoTrack->file);
+
+  long dataLength = fileSize - 44;
+  long numSamples = dataLength / 3;
+
+  fseek(monoTrack->file, 44, SEEK_SET);
+  unsigned char sample[3];
+
+  for (long i = 0; i < numSamples; i++)
+  {
+    size_t offset = 6 * i + 3 * channel;
+    if (offset + 3 > bufferSize)
+    {
+      break;
+    }
+
+    fread(sample, 1, 3, monoTrack->file);
+    memcpy(stereoBuffer + offset, sample, 3);
+  }
 }
 
 float getCurrentStartTimeInSeconds()
@@ -141,7 +203,7 @@ void initTracks(const uint32_t *inputTrackRecordEnabledStates)
     openWavFile(&recorder.tracks[i], filename, appDirPath, 1);
     free(appDirPath);
 
-    if (inputTrackRecordEnabledStates[i] == 1)
+    if (inputTrackRecordEnabledStates && inputTrackRecordEnabledStates[i] == 1)
     {
       recorder.tracks[i].recordEnabled = true;
     }
@@ -536,4 +598,86 @@ int getInputTrackCount()
   }
   // after we re-init and set the recorder.trackCount we should now be returning the latest state update
   return recorder.trackCount;
+}
+
+int bounceTracks(const uint32_t *tracksToBounce, char *selectedPath)
+{
+  // reset time in seconds
+  startTimeInSeconds = 0;
+
+  initTracks(NULL); // ###############################
+
+  // Parse the selected path into directory and track title
+  char *dirPath, *trackTitle;
+  separatePathFromTitle(selectedPath, &dirPath, &trackTitle);
+
+  // Create the new stereo file
+  WavFile *bouncedTrack = malloc(sizeof(WavFile));
+  openWavFile(bouncedTrack, trackTitle, dirPath, 2);
+
+  // Find the two tracks marked for bouncing
+  int selectedIndices[2] = {-1, -1};
+  int found = 0;
+  for (size_t i = 0; i < recorder.trackCount; i++)
+  {
+    if (tracksToBounce[i] == 1)
+    {
+      selectedIndices[found++] = i;
+    }
+  }
+
+  if (found != 2)
+  {
+    printf("Error: Less than two tracks marked for bouncing.\n");
+    free(bouncedTrack);
+    return 1;
+  }
+
+  // Determine the duration of the longest track among the two
+  int duration = 0;
+  for (int i = 0; i < 2; i++)
+  {
+    fseek(recorder.tracks[selectedIndices[i]].file, 0, SEEK_END);
+    size_t fileSize = ftell(recorder.tracks[selectedIndices[i]].file);
+    size_t audioDataSize = fileSize - 44; // Subtract the header size
+    int trackDuration = calculateAudioDuration(audioDataSize, 1);
+    if (duration < trackDuration)
+    {
+      duration = trackDuration;
+    }
+  }
+
+  if (duration == 0)
+  {
+    printf("ERROR: One or both tracks are empty.\n");
+    free(bouncedTrack);
+    return 1;
+  }
+
+  // Allocate and initialize a stereo buffer based on the longest track duration
+  size_t stereoBufferSize = calculateBufferSize(2, duration);
+  unsigned char *stereoBuffer = malloc(stereoBufferSize);
+  if (!stereoBuffer)
+  {
+    printf("Memory allocation failed for stereo buffer.\n");
+    free(bouncedTrack);
+    return 1;
+  }
+  memset(stereoBuffer, 0, stereoBufferSize);
+
+  // Mix each track into the appropriate channel of the stereo buffer
+  for (int channel = 0; channel < 2; channel++)
+  {
+    mixMonoTrackToStereoBuffer(&recorder.tracks[selectedIndices[channel]], stereoBuffer, stereoBufferSize, channel);
+  }
+
+  // Write and close the stereo WAV file
+  writeWavData(bouncedTrack, stereoBuffer, stereoBufferSize);
+  closeWavFile(bouncedTrack);
+
+  // Cleanup
+  free(stereoBuffer);
+  free(bouncedTrack);
+
+  return 0;
 }
