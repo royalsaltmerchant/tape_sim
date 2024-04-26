@@ -56,5 +56,6 @@ float getCurrentStartTimeInSeconds();
 int getInputTrackCount();
 float getCurrentAmplitude(unsigned int index);
 void onSetInputTrackRecordEnabled(unsigned int index, bool state);
+int bounceTracks(const uint32_t *tracksToBounce, char *selectedPath);
 
 #endif
