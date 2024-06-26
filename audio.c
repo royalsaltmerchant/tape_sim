@@ -292,44 +292,45 @@ static int streamCallback(const void *inputBuffer, void *outputBuffer,
         writeWavData(&recorder.tracks[channel], writeBuffer, framesPerBuffer * 3);
       }
     }
-
-    // Handle Playback for non record enabled tracks
-    float dbLevel = -100; // Default to a very low dB level if no data is read
-    size_t readFrames = 0;
-
-    for (size_t frame = 0; frame < framesPerBuffer; ++frame)
+    else // Handle Playback for non record enabled tracks
     {
-      if (recorder.playbackPosition + frame < recorder.tracks[channel].dataSize / 3)
+      float dbLevel = -100; // Default to a very low dB level if no data is read
+      size_t readFrames = 0;
+
+      for (size_t frame = 0; frame < framesPerBuffer; ++frame)
       {
-        uint8_t sampleBytes[3];
-        if (fread(sampleBytes, sizeof(uint8_t), 3, recorder.tracks[channel].file) == 3)
+        if (recorder.playbackPosition + frame < recorder.tracks[channel].dataSize / 3)
         {
-          memcpy(&outputBuffers[channel][frame * 3], sampleBytes, 3);
-          readFrames++;
+          uint8_t sampleBytes[3];
+          if (fread(sampleBytes, sizeof(uint8_t), 3, recorder.tracks[channel].file) == 3)
+          {
+            memcpy(&outputBuffers[channel][frame * 3], sampleBytes, 3);
+            readFrames++;
+          }
+          else
+          {
+            memset(&outputBuffers[channel][frame * 3], 0, 3); // Fail-safe clear in case of read failure
+          }
         }
         else
         {
-          memset(&outputBuffers[channel][frame * 3], 0, 3); // Fail-safe clear in case of read failure
+          memset(&outputBuffers[channel][frame * 3], 0, 3); // Zero out the buffer beyond data size
         }
       }
-      else
+
+      if (readFrames > 0)
       {
-        memset(&outputBuffers[channel][frame * 3], 0, 3); // Zero out the buffer beyond data size
+        float rms = calculateRMS(outputBuffers[channel], readFrames);
+        dbLevel = rmsToDb(rms);
       }
-    }
+      printf("Playback - Channel %d: dB Level = %f\n", channel, dbLevel);
+      recorder.tracks[channel].currentAmplitudeLevel = dbLevel;
 
-    if (readFrames > 0)
-    {
-      float rms = calculateRMS(outputBuffers[channel], readFrames);
-      dbLevel = rmsToDb(rms);
-    }
-    printf("Playback - Channel %d: dB Level = %f\n", channel, dbLevel);
-    recorder.tracks[channel].currentAmplitudeLevel = dbLevel;
-
-    // Determine the minimum readFrames across all channels for playback tracking
-    if (readFrames < minReadFrames)
-    {
-      minReadFrames = readFrames;
+      // Determine the minimum readFrames across all channels for playback tracking
+      if (readFrames < minReadFrames)
+      {
+        minReadFrames = readFrames;
+      }
     }
   }
 
