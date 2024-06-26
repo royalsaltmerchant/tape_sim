@@ -9,7 +9,7 @@ The program can record as many tracks as there are inputs in your <b>default aud
 Your Recordings will be saved to the directory `/Users/<username>/Music/tape_sim`
 They will be named as such: `track1.wav track2.wav` etc... for as many inputs as are available.
 
-By selecting the checkbox next to the track name you record enable that track so that during recording those tracks will write, however they will not playback while in record-enable mode.
+By selecting the checkbox next to the track name you record enable the track. All record-enabled tracks will be written to upon recording.
 
 Playback is mapped 1-1 input to output. For example: if there are 4 inputs, 4 wav files are created and playedback on outputs 1-4. <b>If there are not as many outputs as inputs then the program will crash.</b>
 

@@ -292,9 +292,7 @@ static int streamCallback(const void *inputBuffer, void *outputBuffer,
         writeWavData(&recorder.tracks[channel], writeBuffer, framesPerBuffer * 3);
       }
     }
-
-    // Handle Playback for non record enabled tracks
-    if (!recorder.tracks[channel].recordEnabled)
+    else // Handle Playback for non record enabled tracks
     {
       float dbLevel = -100; // Default to a very low dB level if no data is read
       size_t readFrames = 0;
