@@ -1,0 +1,194 @@
+:root {
+  --main-white: rgb(180, 180, 180);
+  --bright-white: rgb(210, 210, 210);
+  --main-dark: rgb(25, 29, 37);
+  --second-dark: rgb(21, 24, 31);
+  --black: rgb(19, 20, 24);
+  --light-blue: rgb(97, 122, 165);
+  --second-blue: rgb(55, 71, 99);
+  --dark-blue: rgb(38, 44, 57);
+  --a-blue: rgb(157, 179, 211);
+  --main-gray: rgb(89, 96, 117);
+  --light-red: rgb(209, 102, 124);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.4;
+  font-family: serif;
+  font-size: 18px;
+  background-color: var(--main-dark);
+  color: var(--main-white);
+  letter-spacing: 0.8px;
+}
+
+p {
+  display: inline-block;
+  margin-bottom: 20px;
+}
+
+a {
+  color: var(--a-blue);
+  text-decoration: none;
+  display: inline-block;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.sub-a {
+  color: var(--light-blue);
+  margin-left: 10px;
+}
+
+br {
+  display: block;
+  content: "";
+  margin-top: 10px;
+}
+
+main {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+nav {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 20px;
+  width: 200px;
+  height: 100%;
+  background-color: var(--dark-blue);
+  transition: transform 0.5s ease, opacity 0.5s ease;
+  opacity: 1;
+  overflow: auto;
+}
+
+.nav-items {
+  /* display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  flex: 1; */
+  scrollbar-width: none;
+  overflow: auto;
+}
+
+/* Initial state for small screens. It's hidden off to the left. */
+@media (max-width: 1000px) {
+  nav {
+    transform: translateX(-100%);
+    opacity: 0;
+    display: none;
+  }
+}
+
+nav a {
+  margin-bottom: 6px;
+  display: block;
+
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 10px 20px;
+  scrollbar-width: none;
+  overflow: auto;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--bright-white);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+h1:hover::after,
+h2:hover::after,
+h3:hover::after,
+h4:hover::after {
+  content: "🔗";
+  margin-left: 5px;
+  font-size: 0.8em;
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+h1 {
+  font-size: 2rem;
+}
+
+h2 {
+  font-size: 1.7rem;
+}
+
+h3 {
+  font-size: 1.3rem;
+}
+
+ul,
+ol {
+  margin-left: 30px;
+  margin-bottom: 20px;
+}
+
+pre {
+  background-color: var(--second-dark);
+  width: fit-content;
+  padding: 15px;
+}
+
+code {
+  background-color: var(--dark-blue);
+}
+
+#hide-nav-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  cursor: pointer;
+}
+
+#show-nav-btn {
+  margin-top: auto;
+  margin-bottom: 5px;
+  margin-left: 5px;
+  ;
+  cursor: pointer;
+}
+
+input {
+  float: right;
+  color: inherit;
+  font: inherit;
+  padding: 2px 10px;
+  background-color: var(--second-dark);
+  border: 1px solid var(--main-gray);
+  border-radius: 30px;
+}
+
+input:focus {
+  outline: 1px solid var(--light-blue);
+}
+
+img {
+  max-width: 100%;
+}

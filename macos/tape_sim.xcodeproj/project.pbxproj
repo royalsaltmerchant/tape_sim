@@ -348,9 +348,11 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = /Users/Julianranieri/Desktop/Code_Base/daw/macos/tape_sim/include;
 				INFOPLIST_FILE = "tape-sim-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Tape Sim";
+				INFOPLIST_KEY_CFBundleDisplayName = Tape_Sim;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "Need access to the Documents folder to read and write files.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app requires microphone access to record audio.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -362,7 +364,7 @@
 				MACH_O_TYPE = mh_execute;
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 2.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.salt.tape-sim";
+				PRODUCT_BUNDLE_IDENTIFIER = com.salt.tapesim;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "tape_sim/tape_sim-Bridging-Header.h";
@@ -391,9 +393,11 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = /Users/Julianranieri/Desktop/Code_Base/daw/macos/tape_sim/include;
 				INFOPLIST_FILE = "tape-sim-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Tape Sim";
+				INFOPLIST_KEY_CFBundleDisplayName = Tape_Sim;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "Need access to the Documents folder to read and write files.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app requires microphone access to record audio.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -405,7 +409,7 @@
 				MACH_O_TYPE = mh_execute;
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 2.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.salt.tape-sim";
+				PRODUCT_BUNDLE_IDENTIFIER = com.salt.tapesim;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "tape_sim/tape_sim-Bridging-Header.h";

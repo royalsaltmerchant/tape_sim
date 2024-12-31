@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Index</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="index.js" defer></script>
+</head>
+<body>
+  <main>
+    <!-- loop sidebar elems -->
+    <nav>
+      <input list="headings" id="search" type="text" placeholder="Search">
+      <datalist id="headings">
+        
+        
+        <option value="privacy.html#Privacy-Policy">Privacy Policy</option>
+        
+        <option value="privacy.html#1.-Information-We-Do-Not-Collect">1. Information We Do Not Collect</option>
+        
+        <option value="privacy.html#2.-Local-Storage-of-Data">2. Local Storage of Data</option>
+        
+        <option value="privacy.html#3.-Permissions">3. Permissions</option>
+        
+        <option value="privacy.html#4.-Usage-Analytics">4. Usage Analytics</option>
+        
+        <option value="privacy.html#5.-Third-Party-Libraries">5. Third-Party Libraries</option>
+        
+        <option value="privacy.html#6.-Security-Measures">6. Security Measures</option>
+        
+        <option value="privacy.html#7.-Updates-to-This-Policy">7. Updates to This Policy</option>
+        
+        <option value="privacy.html#8.-Contact-Us">8. Contact Us</option>
+        
+        
+        
+        <option value="index.html#Tape-Sim">Tape Sim</option>
+        
+        <option value="index.html#Program-Details">Program Details</option>
+        
+        <option value="index.html#SwiftUI-Key-Commands:">SwiftUI Key Commands:</option>
+        
+        <option value="index.html#Stereo-Bounce">Stereo Bounce</option>
+        
+        <option value="index.html#DEV-Setup">DEV Setup</option>
+        
+        <option value="index.html#C-Program-logic-layer">C Program logic layer</option>
+        
+        <option value="index.html#SwiftUI-on-Xcode">SwiftUI on Xcode</option>
+        
+        <option value="index.html#Other-Resources">Other Resources</option>
+        
+        <option value="index.html#Wav-Spec:-https://docs.fileformat.com/audio/wav/">Wav Spec: https://docs.fileformat.com/audio/wav/</option>
+        
+        <option value="index.html#Port-Audio:-https://portaudio.com/docs/v19-doxydocs/index.html">Port Audio: https://portaudio.com/docs/v19-doxydocs/index.html</option>
+        
+        
+      </datalist>
+      <br>
+      <div class="nav-items">
+        
+        <a id="nav-item-Privacy" href="./privacy.html">Privacy</a>
+        
+        <a id="nav-item-Index" href="./index.html">Index</a>
+        
+      </div>
+      <svg id="hide-nav-btn" width="24" height="24" viewBox="0 0 24 24" onclick="hideNav()">
+        <rect y="4" width="24" height="2" fill="var(--a-blue)"/>
+        <rect y="11" width="24" height="2" fill="var(--a-blue)"/>
+        <rect y="18" width="24" height="2" fill="var(--a-blue)"/>
+      </svg>
+    </nav>
+    <svg id="show-nav-btn" width="24" height="24" viewBox="0 0 24 24" onclick="showNav()">
+      <rect y="4" width="24" height="2" fill="var(--a-blue)"/>
+      <rect y="11" width="24" height="2" fill="var(--a-blue)"/>
+      <rect y="18" width="24" height="2" fill="var(--a-blue)"/>
+    </svg>
+    <section>
+      <h1 id="Tape-Sim">Tape Sim</h1><p><img src='/logo.png' alt='Logo' /></p>
+<p>Tape Sim intends to simulate a simple tape machine experience by recording and playing audio with a simple UI.</p>
+<p><img src='/macosscreenshot.png' alt='Image of current UI in MacOS' /></p>
+<h3 id="Program-Details">Program Details</h3>
+
+<p>The program can record as many tracks as there are inputs in your <b>default audio device</b> and allows you to rewind, fast-forward and re-record over a section of time.
+Your Recordings will be saved to the directory <code>/Users/&lt;username&gt;/Music/tape_sim</code>
+They will be named as such: <code>track1.wav track2.wav</code> etc... for as many inputs as are available.</p>
+<p>By selecting the checkbox next to the track name you record enable the track. All record-enabled tracks will be written to upon recording.</p>
+<p>Playback is mapped 1-1 input to output. For example: if there are 4 inputs, 4 wav files are created and playedback on outputs 1-4. <b>If there are not as many outputs as inputs then the program will crash.</b></p>
+<p>Recordings and playback are in mono at <b>48khz 24bit</b> quality.</p>
+<p>Current UI available for this program is for <b>MacOS(Intel x86_64)</b> made with SwiftUI.</p>
+<h3 id="SwiftUI-Key-Commands">SwiftUI Key Commands:</h3><ul><li><code>Space</code> play/stop/rec or stop rew/fwd</li><li><code>r</code> enable record mode (REC)</li><li><code>,</code> rewind</li><li><code>.</code> fast forward</li><li><code>z</code> RTZ</li></ul>
+
+<h3 id="Stereo-Bounce">Stereo Bounce</h3>
+
+<p>The program currently offers a stereo bounce feature which allos the user to select two tracks and create a single stereo wav file in a selected directory. To use this feature you must be using at least a two-track I/O setup. You can select this feature from <code>Actions -&gt; Stereo Bounce</code></p>
+<h2 id="DEV-Setup">DEV Setup</h2>
+
+<h3 id="C-Program-logic-layer">C Program logic layer</h3><p><b>GCC version - Apple clang version 15.0.0 (clang-1500.1.0.2.5)</b></p>
+<p>If you want to work on the logic layer alone you can compile the program with gcc and use the right flags to link the dependencies including port audio. Make sure to download and compile port audio on your machine. You may need to compile targeting a certain mac version to be consistent with the SwiftUI app.</p>
+<p>Here is what I used to compile PA using cmake and setting target osx 11.</p>
+<pre><code>cd portaudio        
+mkdir build &amp;&amp; cd build
+cmake -DCMAKE_OSX_DEPLOYMENT_TARGET=11  .. -DBUILD_SHARED_LIBS=OFF
+make</code></pre>
+
+<p>Then to compile the c program here is an example. Make sure to reference the correct directory that your PA build is in.</p>
+<pre><code>gcc -o audio audio.c -I../portaudio/include -L../portaudio/build -lportaudio -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework CoreServices</code></pre><h3 id="SwiftUI-on-Xcode">SwiftUI on Xcode</h3><p><b>Version 15.2</b></p>
+<p>You need to make sure that you are also linking all the correct binaries in xcode. In Build Phases, it should look like this:</p>
+<p><img src='/xcodelinkbinaries.png' alt='Image of current UI in MacOS' /></p>
+<p>Also, for search paths, you should have something like this for header and library:</p>
+<p><img src='/xcodesearchpaths.png' alt='Image of current UI in MacOS' /></p>
+<h2 id="Other-Resources">Other Resources</h2>
+
+<h4 id="Wav-Spec-https-docs-fileformat-com-audio-wav">Wav Spec: https://docs.fileformat.com/audio/wav/</h4>
+
+<h4 id="Port-Audio-https-portaudio-com-docs-v19-doxydocs-index-html">Port Audio: https://portaudio.com/docs/v19-doxydocs/index.html</h4>
+
+    </section>
+  </main>
+</body>
+</html>
