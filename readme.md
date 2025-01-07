@@ -65,7 +65,7 @@ Also, for search paths, you should have something like this for header and libra
 
 ## Other Resources
 
-#### Wav Spec: https://docs.fileformat.com/audio/wav/
+Wav Spec: https://docs.fileformat.com/audio/wav/
 
-#### Port Audio: https://portaudio.com/docs/v19-doxydocs/index.html
+Port Audio: https://portaudio.com/docs/v19-doxydocs/index.html
 
