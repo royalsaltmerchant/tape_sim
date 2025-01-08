@@ -1,0 +1,3 @@
+gcc -o audio audio.c -I../portaudio/include -L../portaudio/build -lportaudio -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework CoreServices
+
+hdiutil create -volname "tape_sim" -srcfolder ./macos/archives/tape_sim_archive_v2.1 -ov -format UDZO -o tape_sim
