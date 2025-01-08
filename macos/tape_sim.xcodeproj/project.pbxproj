@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E901DC442D2F2D5A00502F48 /* DirectoryPickerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E901DC432D2F2D5000502F48 /* DirectoryPickerViewModel.swift */; };
 		E926FF8E2BC0C11B00C6AF96 /* audio.c in Sources */ = {isa = PBXBuildFile; fileRef = E926FF8C2BC0C11B00C6AF96 /* audio.c */; };
 		E9304A782BDC28F100A5C69D /* Bounce.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9304A772BDC28F100A5C69D /* Bounce.swift */; };
 		E97FBD6F2BC9D3EB006C388D /* AmpMeter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E97FBD6E2BC9D3EB006C388D /* AmpMeter.swift */; };
@@ -24,6 +25,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		E901DC432D2F2D5000502F48 /* DirectoryPickerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectoryPickerViewModel.swift; sourceTree = "<group>"; };
 		E9078C982BC0F1B2009BEFFD /* tape-sim-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "tape-sim-Info.plist"; sourceTree = SOURCE_ROOT; };
 		E926FF7C2BC0A1E200C6AF96 /* libportaudio.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libportaudio.a; path = ../../../../../../usr/local/Cellar/portaudio/19.7.0/lib/libportaudio.a; sourceTree = "<group>"; };
 		E926FF7E2BC0A3BC00C6AF96 /* libportaudio.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libportaudio.dylib; path = ../../../../../../usr/local/Cellar/portaudio/19.7.0/lib/libportaudio.dylib; sourceTree = "<group>"; };
@@ -102,6 +104,7 @@
 		E9CCE8902BC0908D00EEB820 /* tape_sim */ = {
 			isa = PBXGroup;
 			children = (
+				E901DC432D2F2D5000502F48 /* DirectoryPickerViewModel.swift */,
 				E9AF104C2BC3971800DB0A35 /* include */,
 				E9AF104A2BC396E900DB0A35 /* libportaudio.a */,
 				E9078C982BC0F1B2009BEFFD /* tape-sim-Info.plist */,
@@ -201,6 +204,7 @@
 			files = (
 				E97FBD6F2BC9D3EB006C388D /* AmpMeter.swift in Sources */,
 				E9304A782BDC28F100A5C69D /* Bounce.swift in Sources */,
+				E901DC442D2F2D5A00502F48 /* DirectoryPickerViewModel.swift in Sources */,
 				E926FF8E2BC0C11B00C6AF96 /* audio.c in Sources */,
 				E9CCE8942BC0908D00EEB820 /* ContentView.swift in Sources */,
 				E9CCE8922BC0908D00EEB820 /* tape_simApp.swift in Sources */,

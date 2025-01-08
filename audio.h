@@ -18,6 +18,7 @@
 #include <CoreAudio/CoreAudio.h>
 
 // SETUP
+char *appDirPath = NULL;
 float startTimeInSeconds = 0;
 int sampleRate = 48000;
 short bitDepth = 24;
@@ -57,5 +58,6 @@ int getInputTrackCount();
 float getCurrentAmplitude(unsigned int index);
 void onSetInputTrackRecordEnabled(unsigned int index, bool state);
 int bounceTracks(const uint32_t *tracksToBounce, char *selectedPath);
+void onSetAppDirPath(const char *selectedPath);
 
 #endif

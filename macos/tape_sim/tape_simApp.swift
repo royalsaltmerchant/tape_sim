@@ -6,21 +6,31 @@
 //
 
 import SwiftUI
+import AppKit
 
 @main
 struct tape_simApp: App {
-	init() {
-		initAudio()
-	}
+    @StateObject private var directoryPicker = DirectoryPickerViewModel()
+    
+    init() {
+        initAudio()
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear {
+                    directoryPicker.promptUserForDirectory()
+                }
         }
-		.commands {
+        .commands {
             CommandMenu("Actions") {
                 Button("Stereo Bounce") {
                     showBounceWindow()
                 }
+                Button("Change Working Directory") {
+					directoryPicker.promptUserForDirectory()
+				}
             }
         }
     }
@@ -36,11 +46,10 @@ struct tape_simApp: App {
         window.contentView = NSHostingController(rootView: BounceView()).view
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
-    
     }
     
-	// Use this if you want to perform some cleanup before the app is terminated
     func applicationWillTerminate(_ aNotification: Notification) {
-		cleanupAudio()
+        cleanupAudio()
     }
 }
+

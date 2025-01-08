@@ -1,27 +1,6 @@
 #include "audio.h"
 
 // UTILITY FUNCTIONS
-// Function to build a directory path for your app within the user's home directory
-char *buildAppDirectoryPath()
-{
-  struct passwd *pw = getpwuid(getuid());
-  const char *homeDir = pw ? pw->pw_dir : getenv("HOME"); // Use the home directory or fallback to current directory
-  const char *appSubDir = "/Music/tape_sim";
-
-  // Allocate memory for the full path
-  char *appDirPath = malloc(strlen(homeDir) + strlen(appSubDir) + 1);
-  if (appDirPath)
-  {
-    strcpy(appDirPath, homeDir);
-    strcat(appDirPath, appSubDir);
-  }
-
-  // Optionally, create the directory if it doesn't exist
-  mkdir(appDirPath, 0777); // Consider more restrictive permissions
-
-  return appDirPath; // Remember to free this memory after use!
-}
-
 void separatePathFromTitle(const char *selectedPath, char **dirPath, char **trackTitle)
 {
   // Find the last occurrence of '/' which separates directory path and file name
@@ -198,10 +177,7 @@ void initTracks(const uint32_t *inputTrackRecordEnabledStates)
   {
     char filename[20];
     snprintf(filename, sizeof(filename), "track%zu.wav", i + 1);
-
-    char *appDirPath = buildAppDirectoryPath();
     openWavFile(&recorder.tracks[i], filename, appDirPath, 1);
-    free(appDirPath);
 
     if (inputTrackRecordEnabledStates && inputTrackRecordEnabledStates[i] == 1)
     {
@@ -678,4 +654,25 @@ int bounceTracks(const uint32_t *tracksToBounce, char *selectedPath)
   free(bouncedTrack);
 
   return 0;
+}
+
+void onSetAppDirPath(const char *selectedPath)
+{
+  if (appDirPath != NULL)
+  {
+    free(appDirPath);
+  }
+
+  appDirPath = malloc(strlen(selectedPath) + 1);
+  if (appDirPath == NULL)
+  {
+    fprintf(stderr, "Failed to allocate memory for appDirPath\n");
+    return;
+  }
+  strcpy(appDirPath, selectedPath);
+  printf("App directory path set to: %s\n", appDirPath);
+  // reset time in seconds
+  startTimeInSeconds = 0;
+  // re-init tracks
+  initTracks(NULL);
 }

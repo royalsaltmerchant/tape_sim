@@ -53,6 +53,8 @@
         
         <option value="index.html#Stereo-Bounce">Stereo Bounce</option>
         
+        <option value="index.html#Change-working-directory">Change working directory</option>
+        
         <option value="index.html#DEV-Setup">DEV Setup</option>
         
         <option value="index.html#C-Program-logic-layer">C Program logic layer</option>
@@ -91,8 +93,9 @@
 <h3 id="Program-Details">Program Details</h3>
 
 <p>The program can record as many tracks as there are inputs in your <b>default audio device</b> and allows you to rewind, fast-forward and re-record over a section of time.
-Your Recordings will be saved to the directory <code>/Users/&lt;username&gt;/Music/tape_sim</code>
-They will be named as such: <code>track1.wav track2.wav</code> etc... for as many inputs as are available.</p>
+Your Recordings will be saved to the user selected directory which is requested at the start of the program.
+If you do not select a directory the program will end.
+The tracks will be named as such: <code>track1.wav track2.wav</code> etc... for as many inputs as are available.</p>
 <p>By selecting the checkbox next to the track name you record enable the track. All record-enabled tracks will be written to upon recording.</p>
 <p>Playback is mapped 1-1 input to output. For example: if there are 4 inputs, 4 wav files are created and playedback on outputs 1-4. <b>If there are not as many outputs as inputs then the program will crash.</b></p>
 <p>Recordings and playback are in mono at <b>48khz 24bit</b> quality.</p>
@@ -102,6 +105,9 @@ They will be named as such: <code>track1.wav track2.wav</code> etc... for as man
 <h3 id="Stereo-Bounce">Stereo Bounce</h3>
 
 <p>The program currently offers a stereo bounce feature which allos the user to select two tracks and create a single stereo wav file in a selected directory. To use this feature you must be using at least a two-track I/O setup. You can select this feature from <code>Actions -&gt; Stereo Bounce</code></p>
+<h3 id="Change-working-directory">Change working directory</h3>
+
+<p>Change the current working directory where your audio files are saved from <code>Actions -&gt; Change Working Directory</code></p>
 <h2 id="DEV-Setup">DEV Setup</h2>
 
 <h3 id="C-Program-logic-layer">C Program logic layer</h3><p><b>GCC version - Apple clang version 15.0.0 (clang-1500.1.0.2.5)</b></p>

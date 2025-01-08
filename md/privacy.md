@@ -9,7 +9,7 @@ Tape Sim is designed to function as a local audio recording and playback applica
 
 ## 2. Local Storage of Data
 All recordings created with Tape Sim are saved locally on your device at the following directory:
-`/Users/<username>/Music/tape_sim`
+`/Users/<username>/tape_sim`
 
 The recordings are stored as WAV files named according to the track number (e.g., `track1.wav`, `track2.wav`). Tape Sim does not access, transmit, or share these files with any external parties.
 

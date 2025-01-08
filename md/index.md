@@ -8,8 +8,9 @@ Tape Sim intends to simulate a simple tape machine experience by recording and p
 ### Program Details
 
 The program can record as many tracks as there are inputs in your <b>default audio device</b> and allows you to rewind, fast-forward and re-record over a section of time.
-Your Recordings will be saved to the directory `/Users/<username>/Music/tape_sim`
-They will be named as such: `track1.wav track2.wav` etc... for as many inputs as are available.
+Your Recordings will be saved to the user selected directory which is requested at the start of the program.
+If you do not select a directory the program will end.
+The tracks will be named as such: `track1.wav track2.wav` etc... for as many inputs as are available.
 
 By selecting the checkbox next to the track name you record enable the track. All record-enabled tracks will be written to upon recording.
 
@@ -29,6 +30,10 @@ Current UI available for this program is for <b>MacOS(Intel x86_64)</b> made wit
 ### Stereo Bounce
 
 The program currently offers a stereo bounce feature which allos the user to select two tracks and create a single stereo wav file in a selected directory. To use this feature you must be using at least a two-track I/O setup. You can select this feature from `Actions -> Stereo Bounce`
+
+### Change working directory
+
+Change the current working directory where your audio files are saved from `Actions -> Change Working Directory`
 
 ## DEV Setup
 
@@ -68,3 +73,4 @@ Also, for search paths, you should have something like this for header and libra
 Wav Spec: https://docs.fileformat.com/audio/wav/
 
 Port Audio: https://portaudio.com/docs/v19-doxydocs/index.html
+
