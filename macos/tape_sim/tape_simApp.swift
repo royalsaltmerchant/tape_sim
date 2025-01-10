@@ -22,8 +22,14 @@ struct tape_simApp: App {
                 .onAppear {
                     directoryPicker.promptUserForDirectory()
                 }
+				.onDisappear {
+					NSApp.terminate(nil)
+				}
         }
         .commands {
+			CommandGroup(replacing: .newItem) {
+                // Leave this empty to remove the "New Window" option
+            }
             CommandMenu("Actions") {
                 Button("Stereo Bounce") {
                     showBounceWindow()
