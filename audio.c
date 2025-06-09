@@ -119,55 +119,62 @@ void onSetInputTrackRecordEnabled(unsigned int index, bool state)
 
 void openWavFile(WavFile *wav, char *filename, char *directoryPath, short numChannels)
 {
-  char *filePath = malloc(strlen(directoryPath) + strlen(filename) + 2); // +2 for '/' and null terminator
+  char *filePath = malloc(strlen(directoryPath) + strlen(filename) + 2); // +2 for '/' and '\0'
   sprintf(filePath, "%s/%s", directoryPath, filename);
 
   bool fileExists = access(filePath, F_OK) != -1;
 
   int headerSize = 44;
-  int subchunk1Size = 16; // For PCM
-  short audioFormat = 1;  // no compression
+  int subchunk1Size = 16; // PCM
+  short audioFormat = 1;  // No compression
   int byteRate = sampleRate * numChannels * (bitDepth / 8);
   short blockAlign = numChannels * (bitDepth / 8);
+  int zero = 0;
 
   wav->file = fopen(filePath, fileExists ? "r+b" : "wb");
+  if (!wav->file)
+  {
+    perror("Failed to open file");
+    free(filePath);
+    return;
+  }
 
   if (!fileExists)
   {
     wav->dataSize = 0;
-    // Write RIFF header with placeholders for sizes
-    fwrite("RIFF", 1, 4, wav->file);     // "RIFF"
-    fwrite("----", 1, 4, wav->file);     // Placeholder for RIFF chunk size
-    fwrite("WAVEfmt ", 1, 8, wav->file); // "WAVEfmt "
-    fwrite(&subchunk1Size, sizeof(int), 1, wav->file);
-    fwrite(&audioFormat, sizeof(short), 1, wav->file);
-    fwrite(&numChannels, sizeof(short), 1, wav->file);
-    fwrite(&sampleRate, sizeof(int), 1, wav->file);
-    fwrite(&byteRate, sizeof(int), 1, wav->file);
-    fwrite(&blockAlign, sizeof(short), 1, wav->file);
-    fwrite(&bitDepth, sizeof(short), 1, wav->file);
 
-    // Write "data" subchunk header with a placeholder for the data size
-    fwrite("data", 1, 4, wav->file);
-    fwrite("----", 1, 4, wav->file); // Placeholder for data chunk size
+    // Write proper RIFF header
+    fwrite("RIFF", 1, 4, wav->file); // ChunkID
+    fwrite(&zero, 4, 1, wav->file);  // ChunkSize (placeholder)
+    fwrite("WAVE", 1, 4, wav->file); // Format
+
+    fwrite("fmt ", 1, 4, wav->file);         // Subchunk1ID
+    fwrite(&subchunk1Size, 4, 1, wav->file); // Subchunk1Size
+    fwrite(&audioFormat, 2, 1, wav->file);   // AudioFormat
+    fwrite(&numChannels, 2, 1, wav->file);   // NumChannels
+    fwrite(&sampleRate, 4, 1, wav->file);    // SampleRate
+    fwrite(&byteRate, 4, 1, wav->file);      // ByteRate
+    fwrite(&blockAlign, 2, 1, wav->file);    // BlockAlign
+    fwrite(&bitDepth, 2, 1, wav->file);      // BitsPerSample
+
+    fwrite("data", 1, 4, wav->file); // Subchunk2ID
+    fwrite(&zero, 4, 1, wav->file);  // Subchunk2Size (placeholder)
   }
   else
   {
     fseek(wav->file, 0, SEEK_END);
     size_t currentFileSize = ftell(wav->file);
-    wav->dataSize = currentFileSize - headerSize; // Retain original length
-    // Prepare for overwriting by seeking to the intended start position
+    wav->dataSize = currentFileSize - headerSize;
+
+    // Seek to overwrite position
     size_t bytesPerSample = (bitDepth / 8) * numChannels;
-    // Calculate the exact sample offset
     size_t sampleOffset = (size_t)(sampleRate * startTimeInSeconds);
-    // Convert sample offset to byte offset, ensuring it's aligned to start of a frame
     size_t byteOffset = sampleOffset * bytesPerSample;
-    // Adjust for header size
     size_t overwriteStartPos = headerSize + byteOffset;
+
     fseek(wav->file, overwriteStartPos, SEEK_SET);
   }
 
-  // almost forgot to free this memory -_-
   free(filePath);
 }
 
